@@ -152,12 +152,30 @@ class Lexer:
     def isIdentifier():
       nonlocal pos
       nonlocal lexeme
+      TTYPE = None
       if self.source[pos].isalpha():
         while self.source[pos].isalnum() or self.source[pos] == "_":
           advanceLexeme()
-          if pos+1 > len(self.source): break
-        if keywords.get(lexeme) is not None: appendToken(keywords[lexeme])
-        else                   : appendToken(TokenType.IDENTIFIER)
+          if pos+1 > len(self.source): break       
+        match (lexeme):
+          case "and"    : TTYPE = TokenType.AND
+          case "class"  : TTYPE = TokenType.CLASS
+          case "else"   : TTYPE = TokenType.ELSE
+          case "false"  : TTYPE = TokenType.FALSE
+          case "for"    : TTYPE = TokenType.FOR
+          case "fun"    : TTYPE = TokenType.FUN
+          case "if"     : TTYPE = TokenType.IF
+          case "nil"    : TTYPE = TokenType.NIL
+          case "or"     : TTYPE = TokenType.OR
+          case "print"  : TTYPE = TokenType.PRINT
+          case "return" : TTYPE = TokenType.RETURN
+          case "super"  : TTYPE = TokenType.SUPER
+          case "this"   : TTYPE = TokenType.THIS
+          case "true"   : TTYPE = TokenType.TRUE
+          case "var"    : TTYPE = TokenType.VAR
+          case "while"  : TTYPE = TokenType.WHILE
+          case _        : TTYPE = TokenType.IDENTIFIER
+        appendToken(TTYPE)
         self.position = pos+1
         self.column = col+1
         return True
@@ -191,25 +209,6 @@ class TokenType(Enum):
   VAR = 37; WHILE = 38
   
   EOF = 39
-
-keywords = {
-  "and"    :  TokenType.AND,
-  "class"  :  TokenType.CLASS,
-  "else"   :  TokenType.ELSE, 
-  "false"  :  TokenType.FALSE,
-  "for"    :  TokenType.FOR,
-  "fun"    :  TokenType.FUN,
-  "if"     :  TokenType.IF,
-  "nil"    :  TokenType.NIL,
-  "or"     :  TokenType.OR,
-  "print"  :  TokenType.PRINT,
-  "return" :  TokenType.RETURN,
-  "super"  :  TokenType.SUPER,
-  "this"   :  TokenType.THIS,
-  "true"   :  TokenType.TRUE,
-  "var"    :  TokenType.VAR,
-  "while"  :  TokenType.WHILE,
-}
   
 class Token:
   def __init__(self, type, lexeme, line, column):
