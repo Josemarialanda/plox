@@ -10,9 +10,6 @@ class Lexer:
     self.position = 0
     self.line = 1
     self.column = 1
-    self.errorLine = 1
-    self.errorColumn = 1
-    self.errorToken = ""
     self.run()
     
   def run(self):
@@ -28,9 +25,12 @@ class Lexer:
       
   def currentChar(self):
     return self.source[self.position]
+  
+  def prevChar(self):
+    return self.source[self.position-1]
       
   def peek(self):
-    return self.source[self.position+1] if not self.isOEF() else ""
+    return self.source[self.position+1]
         
   def isOEF(self):
     return self.position+1 > len(self.source)
@@ -55,7 +55,7 @@ class Lexer:
       if self.isOEF(): break
       
   def error(self):
-    error = Error(self.errorLine, self.errorColumn, f'''Unexpected character "{self.errorToken}"''' )
+    error = Error(self.line, self.column-1, self.prevChar())
     self.errors.append(error)
     
   def EOF(self):
@@ -65,7 +65,7 @@ class Lexer:
   def isOneOrTwoCharacterToken(self):
     TTYPE = None
     char = self.currentChar()
-    nextChar = self.peek()
+    nextChar = self.peek() if not (self.position+1 >= len(self.source)) else ""
     match (char, nextChar):
       case ("(", _)   : TTYPE = TokenType.LEFT_PAREN
       case (")", _)   : TTYPE = TokenType.RIGHT_PAREN
@@ -87,11 +87,7 @@ class Lexer:
       case ("=", _)   : TTYPE = TokenType.EQUAL
       case ("!", "=") : char += nextChar; TTYPE = TokenType.BANG_EQUAL
       case ("!", _)   : TTYPE = TokenType.BANG
-      case _: 
-        char = ""
-        self.errorToken = self.currentChar()
-        self.errorLine = self.line
-        self.errorColumn = self.column
+      case _: char = ""
     if char == "": 
       self.advance(1)
       return False
@@ -231,14 +227,14 @@ class Token:
       '''
   
 class Error:  
-  def __init__(self, line, column, message):
+  def __init__(self, line, column, token):
     self.line = line
     self.column = column
-    self.message = message
+    self.token = token
       
   def __repr__(self):
     return f'''
-      {self.message}
+      Unexpected character "{self.token}"
       line : {self.line}
       column : {self.column}
       '''

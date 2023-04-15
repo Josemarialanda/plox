@@ -1,5 +1,5 @@
 import sys
-from lexer import Lexer
+from plox_lexer import Lexer
 
 def runFile(path):
   Lexer(path)
