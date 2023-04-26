@@ -2,7 +2,7 @@
 
 let
   python-packages = p: with p; [
-    pygments
+    anytree
   ];
   python-with-packages = pkgs.python311.withPackages python-packages;
   common-utils = with pkgs; [ curl wget gcc ];
