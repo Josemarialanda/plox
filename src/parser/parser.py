@@ -57,11 +57,34 @@ primary        → "true" | "false" | "nil" | "this"
                | "super" "." IDENTIFIER ;
 """
 
-from parser.expr import (Assign, Binary, Call, Expr, Get, Grouping, Literal,
-                         Logical, Set, Super, This, Unary, Variable)
+from parser.expr import (
+    Assign,
+    Binary,
+    Call,
+    Expr,
+    Get,
+    Grouping,
+    Literal,
+    Logical,
+    Set,
+    Super,
+    This,
+    Unary,
+    Variable,
+)
 from parser.parserError import ParseError
-from parser.stmt import (Block, Class, Expression, Function, If, Print, Return,
-                         Stmt, Var, While)
+from parser.stmt import (
+    Block,
+    Class,
+    Expression,
+    Function,
+    If,
+    Print,
+    Return,
+    Stmt,
+    Var,
+    While,
+)
 from typing import Optional
 
 from scanner.token import Token
