@@ -2,9 +2,10 @@
 
 let
   python-packages = p: with p; [
-    anytree
+    black
+    isort
   ];
-  python-with-packages = pkgs.python311.withPackages python-packages;
+  python-with-packages = pkgs.python310.withPackages python-packages;
   common-utils = with pkgs; [ curl wget gcc ];
 in pkgs.mkShell {
   packages = common-utils ++ 
