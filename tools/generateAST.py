@@ -6,6 +6,7 @@ from typing import Dict, List
 import black
 import isort
 
+
 class GenerateAst:
     def __init__(self, outputdir):
         self.outputdir = Path(outputdir)
@@ -53,7 +54,7 @@ class GenerateAst:
         )
 
     def _create_output_directory(self):
-        """ Make sure the _create_output_directory exists"""
+        """Make sure the _create_output_directory exists"""
         if self.outputdir.exists() and self.outputdir.is_dir():
             return
 
@@ -112,7 +113,7 @@ class GenerateAst:
         return lines
 
     def _define_visitor(self, base_name: str, types: List) -> List:
-        """ Create the {base_name}Visitor """
+        """Create the {base_name}Visitor"""
 
         vistor_lines = [
             f"class {base_name}Visitor(ABC):",
@@ -164,7 +165,7 @@ class GenerateAst:
         return lines
 
     def _write_file(self, base_name: str, lines: List):
-        """ Write all the lines"""
+        """Write all the lines"""
         output_file = self.outputdir / f"{base_name.lower()}.py"
 
         # Reformat the file with black. This way there is no need for difficult
