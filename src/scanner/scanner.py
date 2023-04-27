@@ -6,7 +6,6 @@ from scanner.error import Error
 class Scanner:
   
   def __init__(self,source):
-      self.__hasError : bool        = False
       self.__source :   str         = source
       self.__tokens :   list[Token] = []
       self.__errors :   list[Error] = []
@@ -45,7 +44,7 @@ class Scanner:
       
   @property
   def hasError(self) -> bool:
-    return self.__hasError
+    return len(self.__errors) > 0
       
   def run(self) -> None:
     self.__scanTokens()
@@ -75,29 +74,37 @@ class Scanner:
       case '=': self.__addToken(TokenType.EQUAL_EQUAL   if self.__match('=') else TokenType.EQUAL)
       case '<': self.__addToken(TokenType.LESS_EQUAL    if self.__match('=') else TokenType.LESS)
       case '>': self.__addToken(TokenType.GREATER_EQUAL if self.__match('=') else TokenType.GREATER)
-      case ' ' | '\r' | '\t': pass
+      case ' ' | '\r' | '\t' | '\n': pass
       case '"': self.__string()
-      case '\n': 
-        self.__line += 1
-        self.__column = 1
       case '/':
         if self.__match('/'):
           while self.__peek() != '\n' and not self.__isEOF(): 
             self.__advance()
+        elif self.__match('*'): self.__blockComment()
         else:
           self.__addToken(TokenType.SLASH)
       case _:
         if char.isdigit(): self.__number()
         elif self.isIdentifierPart(char): self.__identifier()
         else: self.__error(f"Unexpected character '{char}'")
-    return None
+    return
   
+  def __blockComment(self) -> None:
+    while self.__peek() + self.__peekNext() != '*/':
+      self.__advance()
+      if self.__isEOF():
+        self.__advance()
+        self.__error("Unterminated block comment")
+        break
+    self.__advance()
+    self.__advance()
+        
   def __string(self) -> None:
     while self.__peek() != '"' and not self.__isEOF():
       self.__advance()
     if self.__isEOF():
       self.__error("Unterminated string")
-      return None
+      return
     self.__advance()
     literal = self.__source[self.__start + 1:self.__current - 1]
     self.__addToken(TokenType.STRING,literal)
@@ -127,7 +134,7 @@ class Scanner:
   def __match(self,expected: str) -> bool:
     if self.__source[self.__current] != expected or self.__isEOF(): 
       return False
-    self.__current += 1
+    self.__advance()
     return True
     
   def __peek(self) -> str:
@@ -139,18 +146,15 @@ class Scanner:
       return '\0'
     return self.__source[self.__current + 1]
           
-  def __advance(self) -> Optional[str]:
+  def __advance(self) -> str:
     current = self.__peek()
     match current:
-      case None: pass
       case '\n': 
         self.__line += 1
         self.__column = 1
-        self.__current += 1
       case _: 
-        self.__line = 1
         self.__column += 1
-        self.__current += 1
+    self.__current += 1
     return current
       
   def __addToken(self
@@ -161,8 +165,7 @@ class Scanner:
     self.__tokens.append(Token(type,text,literal))
     
   def __error(self,message: str) -> None:
-    self.__hasError = True
-    self.__errors.append(Error(self.__line,self.__column,message))
+    self.__errors.append(Error(self.__line,self.__column-1,message))
   
   def __isEOF(self) -> bool:
     return self.__current >= len(self.__source)
