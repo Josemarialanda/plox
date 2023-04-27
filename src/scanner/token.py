@@ -12,8 +12,19 @@ class Token:
     self.literal   = literal
 
   def __str__( self ) -> str:
-    return f'''
-    type    = {self.tokenType} 
-    lexeme  = {self.lexeme} 
-    literal = {self.literal}
-    '''
+    match (self.tokenType,self.literal):
+      case (TokenType.EOF, _): 
+        return f'''
+        {self.tokenType}
+        '''
+      case (_, None): 
+        return f'''
+        type    = {repr(self.tokenType)} 
+        lexeme  = {self.lexeme}
+        '''
+      case (_, _):
+        return f'''
+        type    = {repr(self.tokenType)} 
+        lexeme  = {self.lexeme}
+        literal = {self.literal}
+        '''
