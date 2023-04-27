@@ -1,20 +1,19 @@
 from typing import Optional
 from scanner.tokenType import TokenType
 from scanner.token import Token
-from scanner.error import Error
 
 class Scanner:
   
   def __init__(self,source):
+      self.__hasError:  bool        = False
       self.__source :   str         = source
       self.__tokens :   list[Token] = []
-      self.__errors :   list[Error] = []
       self.__start  :   int         = 0
       self.__current:   int         = 0
       self.__line   :   int         = 1
       self.__column :   int         = 1
       
-  keywords = {
+  __keywords = {
     "and":    TokenType.AND,
     "class":  TokenType.CLASS,
     "else":   TokenType.ELSE,
@@ -34,20 +33,16 @@ class Scanner:
     "assert": TokenType.ASSERT,
   }
   
+  def run(self) -> None:
+    self.__scanTokens()
+  
   @property
   def tokens(self) -> list[Token]:
     return self.__tokens
-  
-  @property
-  def errors(self) -> list[Error]:
-    return self.__errors
       
   @property
   def hasError(self) -> bool:
-    return len(self.__errors) > 0
-      
-  def run(self) -> None:
-    self.__scanTokens()
+    return self.__hasError
       
   def __scanTokens(self) -> None:
     while not self.__isEOF():
@@ -125,7 +120,7 @@ class Scanner:
     while self.isIdentifierPart(self.__peek()):
       self.__advance()
     text = self.__source[self.__start : self.__current]
-    self.__addToken(self.keywords.get(text, TokenType.IDENTIFIER))
+    self.__addToken(self.__keywords.get(text, TokenType.IDENTIFIER))
       
   @staticmethod
   def isIdentifierPart(c: str):
@@ -165,7 +160,12 @@ class Scanner:
     self.__tokens.append(Token(type,text,literal))
     
   def __error(self,message: str) -> None:
-    self.__errors.append(Error(self.__line,self.__column-1,message))
+    self.__hasError = True
+    print(f'''
+      line : {self.__line}
+      column : {self.__column-1}
+      {message}
+      ''')
   
   def __isEOF(self) -> bool:
     return self.__current >= len(self.__source)
