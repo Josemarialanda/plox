@@ -47,3 +47,6 @@ class TokenType(Enum):
   ASSERT        = auto()  
   
   EOF           = auto()
+  
+  def __repr__(self) -> str:
+    return self.name
