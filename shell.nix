@@ -13,7 +13,4 @@ in pkgs.mkShell {
              (with pkgs; [ 
 
              ]);
-  shellHook = ''
-    alias format="black src && isort src"
-  '';
 }

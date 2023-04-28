@@ -96,15 +96,21 @@ class Parser:
         self.__hasError: bool = False
         self.__tokens: list[Token] = tokens
         self.__current: int = 0
-        self.__program: list[Stmt] = []
+        self.__programTree: list[Stmt] = []
         self.onError = onError
-
+        
     @property
     def hasError(self) -> bool:
         return self.__hasError
+    
+    @property
+    def programTree(self) -> list[Stmt]:
+        if self.__hasError:
+            return []
+        return self.__programTree
 
     def run(self):
-        self.__PROGRAM()
+        return
 
     def __PROGRAM(self):
         return

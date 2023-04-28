@@ -39,6 +39,8 @@ class Scanner:
 
     @property
     def tokens(self) -> list[Token]:
+        if self.__hasError:
+            return []
         return self.__tokens
 
     @property
