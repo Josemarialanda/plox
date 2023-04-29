@@ -105,9 +105,9 @@ class Parser:
         return self.__hadError
 
     def run(self):
-        self.__parse()
+        self.__PROGRAM()
 
-    def __parse(self):
+    def __PROGRAM(self):
         while not self.__isAtEnd():
             if declaration := self.__DECLARATION():
                 self.__program.append(declaration)
