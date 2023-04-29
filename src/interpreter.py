@@ -3,6 +3,7 @@ import sys
 from scanner.scanner import Scanner
 from scanner.token import Token
 from parser.parser import Parser
+from parser.stmt import Stmt
 
 
 def runFile(path: str):
@@ -11,7 +12,7 @@ def runFile(path: str):
         tokens = runScanner(source)
         program = runParser(tokens)
         # run resolver
-        # run interpreter
+        # run evaluator
 
 
 def runScanner(source: str) -> list[Token]:
@@ -22,7 +23,7 @@ def runScanner(source: str) -> list[Token]:
     return scanner.tokens
 
 
-def runParser(tokens: list[Token]):
+def runParser(tokens: list[Token]) -> list[Stmt]:
     parser = Parser(tokens)
     parser.run()
     if parser.hadError:
