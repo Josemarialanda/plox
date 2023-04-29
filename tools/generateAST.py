@@ -134,8 +134,6 @@ class GenerateAst:
         fields = [field.strip().split() for field in fields_list.split(", ")]
 
         # Convert SnakeCase to camel_case.
-        # This is used, for example, in the If Stmt, where the java variable names are
-        # thenBranch and elseBranch
         for field in fields:
             field[1] = re.sub(r"(?<!^)(?=[A-Z])", "_", field[1]).lower()
 
@@ -165,8 +163,7 @@ class GenerateAst:
         """Write all the lines"""
         output_file = self.outputdir / f"{base_name.lower()}.py"
 
-        # Reformat the file with black. This way there is no need for difficult
-        # list mangling
+        # Reformat the file with black
         file_contents = black.format_str("\n".join(lines), mode=black.FileMode())
 
         # Reformat the file with isort
