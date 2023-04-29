@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from parser.expr import Expr, Variable
-from typing import Optional, list
+from typing import Optional
 
 from scanner.token import Token
 

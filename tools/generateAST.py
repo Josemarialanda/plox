@@ -46,7 +46,7 @@ class GenerateAst:
                 "While      : Expr condition, Stmt body",
             ],
             imports={
-                "typing": ["list", "Optional"],
+                "typing": ["Optional"],
                 "parser.expr": ["Expr", "Variable"],
                 "scanner.token": ["Token"],
             },
