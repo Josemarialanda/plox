@@ -40,8 +40,7 @@ exprStmt       → expression ";" ;
 printStmt      → "print" expression ";" ;
 
 expression     → assignment ;
-assignment     → ( call "." )? IDENTIFIER "=" assignment
-               | logic_or;
+assignment     → logic_or ( "=" assignment )? ; 
 logic_or       → logic_and ( "or" logic_and )* ;
 logic_and      → equality ( "and" equality )* ;
 equality       → comparison ( ( "!=" | "==" ) comparison )* ;
@@ -395,7 +394,7 @@ class Parser:
                 return True
         return False
 
-    def __consume(self, token_type: TokenType, message: str):
+    def __consume(self, token_type: TokenType, message: str) -> Optional[Token]:
         if self.__check(token_type):
             return self.__advance()
         self.__error(self.__peek(), message)
@@ -419,7 +418,7 @@ class Parser:
     def __isAtEnd(self) -> bool:
         return self.__peek().tokenType == TokenType.EOF
 
-    def __error(self, token: Token, message: str):
+    def __error(self, token: Token, message: str) -> ParseError:
         self.__hadError = True
         raise ParseError(token, message)
 
