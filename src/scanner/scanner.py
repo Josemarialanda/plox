@@ -14,27 +14,7 @@ class Scanner:
         self.__line: int = 1
         self.__column: int = 1
 
-    __keywords = {
-        "and": TokenType.AND,
-        "class": TokenType.CLASS,
-        "else": TokenType.ELSE,
-        "false": TokenType.FALSE,
-        "for": TokenType.FOR,
-        "fun": TokenType.FUN,
-        "if": TokenType.IF,
-        "nil": TokenType.NIL,
-        "or": TokenType.OR,
-        "print": TokenType.PRINT,
-        "return": TokenType.RETURN,
-        "super": TokenType.SUPER,
-        "this": TokenType.THIS,
-        "true": TokenType.TRUE,
-        "var": TokenType.VAR,
-        "while": TokenType.WHILE,
-        "assert": TokenType.ASSERT,
-    }
-
-    def run(self) -> None:
+    def run(self):
         self.__scanTokens()
 
     @property
@@ -47,17 +27,15 @@ class Scanner:
     def hadError(self) -> bool:
         return self.__hadError
 
-    def __scanTokens(self) -> None:
+    def __scanTokens(self):
         while not self.__isEOF():
             self.__scanToken()
         self.__eof()
 
-    def __scanToken(self) -> None:
+    def __scanToken(self):
         self.__start = self.__current
         char = self.__advance()
         match char:
-            case None:
-                pass
             case "(":
                 self.__addToken(TokenType.LEFT_PAREN)
             case ")":
@@ -117,7 +95,7 @@ class Scanner:
                     self.__error(f"Unexpected character '{char}'")
         return
 
-    def __blockComment(self) -> None:
+    def __blockComment(self):
         while self.__peek() + self.__peekNext() != "*/":
             self.__advance()
             if self.__isEOF():
@@ -127,7 +105,7 @@ class Scanner:
         self.__advance()
         self.__advance()
 
-    def __string(self) -> None:
+    def __string(self):
         while self.__peek() != '"' and not self.__isEOF():
             self.__advance()
         if self.__isEOF():
@@ -137,7 +115,7 @@ class Scanner:
         literal = self.__source[self.__start + 1 : self.__current - 1]
         self.__addToken(TokenType.STRING, literal)
 
-    def __number(self) -> None:
+    def __number(self):
         while self.__peek().isdigit():
             self.__advance()
         if self.__peek() == "." and self.__peekNext().isdigit():
@@ -148,14 +126,33 @@ class Scanner:
             TokenType.NUMBER, float(self.__source[self.__start : self.__current])
         )
 
-    def __eof(self) -> None:
+    def __eof(self):
         self.__tokens.append(Token(TokenType.EOF, "", None))
 
-    def __identifier(self) -> None:
+    def __identifier(self):
+        __keywords = {
+            "and": TokenType.AND,
+            "class": TokenType.CLASS,
+            "else": TokenType.ELSE,
+            "false": TokenType.FALSE,
+            "for": TokenType.FOR,
+            "fun": TokenType.FUN,
+            "if": TokenType.IF,
+            "nil": TokenType.NIL,
+            "or": TokenType.OR,
+            "print": TokenType.PRINT,
+            "return": TokenType.RETURN,
+            "super": TokenType.SUPER,
+            "this": TokenType.THIS,
+            "true": TokenType.TRUE,
+            "var": TokenType.VAR,
+            "while": TokenType.WHILE,
+            "assert": TokenType.ASSERT,
+        }
         while self.isIdentifierPart(self.__peek()):
             self.__advance()
         text = self.__source[self.__start : self.__current]
-        self.__addToken(self.__keywords.get(text, TokenType.IDENTIFIER))
+        self.__addToken(__keywords.get(text, TokenType.IDENTIFIER))
 
     @staticmethod
     def isIdentifierPart(c: str):
@@ -188,13 +185,11 @@ class Scanner:
         self.__current += 1
         return current
 
-    def __addToken(
-        self, type: TokenType, literal: Optional[float | str] = None
-    ) -> None:
+    def __addToken(self, type: TokenType, literal: Optional[float | str] = None):
         text = self.__source[self.__start : self.__current]
         self.__tokens.append(Token(type, text, literal))
 
-    def __error(self, message: str) -> None:
+    def __error(self, message: str):
         self.__hadError = True
         print(
             f"""
