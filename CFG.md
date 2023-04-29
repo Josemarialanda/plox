@@ -4,18 +4,19 @@
 program        → declaration* eof ;
 
 declaration    → classDecl
-               | funDecl
+               | function
                | varDecl
                | statement ;
 
 classDecl      → "class" IDENTIFIER ( "<" IDENTIFIER )?
                  "{" function* "}" ;
 
-funDecl        → "fun" function ;
-function       → IDENTIFIER "(" parameters? ")" block ;
+function       → "fun"? IDENTIFIER "(" parameters? ")" block ;
 parameters     → IDENTIFIER ( "," IDENTIFIER )* ;
 
 varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
+
+block          → "{" declaration* "}" ;
 
 statement      → exprStmt
                | forStmt
@@ -34,8 +35,6 @@ forStmt        → "for" "(" ( varDecl | exprStmt | ";" )
 whileStmt      → "while" "(" expression ")" statement ;
 
 ifStmt         → "if" "(" expression ")" statement ( "else" statement )? ;
-
-block          → "{" declaration* "}" ;
 
 exprStmt       → expression ";" ;
 printStmt      → "print" expression ";" ;

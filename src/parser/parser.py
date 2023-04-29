@@ -4,18 +4,19 @@ Context-Free Grammar:
 program        → declaration* eof ;
 
 declaration    → classDecl
-               | funDecl
+               | function
                | varDecl
                | statement ;
 
 classDecl      → "class" IDENTIFIER ( "<" IDENTIFIER )?
                  "{" function* "}" ;
 
-funDecl        → "fun" function ;
-function       → IDENTIFIER "(" parameters? ")" block ;
+function       → "fun"? IDENTIFIER "(" parameters? ")" block ;
 parameters     → IDENTIFIER ( "," IDENTIFIER )* ;
 
 varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
+
+block          → "{" declaration* "}" ;
 
 statement      → exprStmt
                | forStmt
@@ -34,8 +35,6 @@ forStmt        → "for" "(" ( varDecl | exprStmt | ";" )
 whileStmt      → "while" "(" expression ")" statement ;
 
 ifStmt         → "if" "(" expression ")" statement ( "else" statement )? ;
-
-block          → "{" declaration* "}" ;
 
 exprStmt       → expression ";" ;
 printStmt      → "print" expression ";" ;
@@ -117,18 +116,18 @@ class Parser:
     def __DECLARATION(self) -> Optional[Stmt]:
         try:
             if self.__match(TokenType.CLASS):
-                return self.__CLASS_DECLARATION()
+                return self.__CLASS_DECL()
             if self.__match(TokenType.FUN):
                 return self.__FUNCTION("function")
             if self.__match(TokenType.VAR):
-                return self.__VAR_DECLARATION()
+                return self.__VAR_DECL()
             return self.__STATEMENT()
         except ParseError as error:
             print(error)
             self.__synchronize()
             return None
 
-    def __CLASS_DECLARATION(self) -> Stmt:
+    def __CLASS_DECL(self) -> Stmt:
         name = self.__consume(TokenType.IDENTIFIER, "Expect class name.")
         superclass = None
         if self.__match(TokenType.LESS):
@@ -145,6 +144,14 @@ class Parser:
     def __FUNCTION(self, kind: str) -> Function:
         name = self.__consume(TokenType.IDENTIFIER, f"Expect {kind} name.")
         self.__consume(TokenType.LEFT_PAREN, f"Expect '(' after {kind} name.")
+        parameters = self.__PARAMETERS()
+        self.__consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.")
+        self.__consume(TokenType.LEFT_BRACE, f"Expect '{{' before {kind} body.")
+        body = self.__BLOCK()
+        assert name is not None
+        return Function(name=name, params=parameters, body=body)
+
+    def __PARAMETERS(self) -> list[Token]:
         parameters = []
         if not self.__check(TokenType.RIGHT_PAREN):
             parameters.append(
@@ -156,13 +163,9 @@ class Parser:
                 parameters.append(
                     self.__consume(TokenType.IDENTIFIER, "Expect parameter name.")
                 )
-        self.__consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.")
-        self.__consume(TokenType.LEFT_BRACE, f"Expect '{{' before {kind} body.")
-        body = self.__BLOCK()
-        assert name is not None
-        return Function(name=name, params=parameters, body=body)
+        return parameters
 
-    def __VAR_DECLARATION(self) -> Stmt:
+    def __VAR_DECL(self) -> Stmt:
         name = self.__consume(TokenType.IDENTIFIER, "Expect variable name.")
         initializer = None
         if self.__match(TokenType.EQUAL):
@@ -171,21 +174,6 @@ class Parser:
         assert name is not None
         return Var(name=name, initializer=initializer)
 
-    def __STATEMENT(self) -> Stmt:
-        if self.__match(TokenType.FOR):
-            return self.__FOR_STATEMENT()
-        if self.__match(TokenType.IF):
-            return self.__IF_STATEMENT()
-        if self.__match(TokenType.PRINT):
-            return self.__PRINT_STATEMENT()
-        if self.__match(TokenType.RETURN):
-            return self.__RETURN_STATEMENT()
-        if self.__match(TokenType.WHILE):
-            return self.__WHILE_STATEMENT()
-        if self.__match(TokenType.LEFT_BRACE):
-            return Block(self.__BLOCK())
-        return self.__EXPRESSION_STATEMENT()
-
     def __BLOCK(self) -> list[Stmt]:
         statements = []
         while not self.__check(TokenType.RIGHT_BRACE) and not self.__isAtEnd():
@@ -193,14 +181,37 @@ class Parser:
         self.__consume(TokenType.RIGHT_BRACE, "Expect '}' after block.")
         return statements
 
-    def __FOR_STATEMENT(self) -> Stmt:
+    def __STATEMENT(self) -> Stmt:
+        if self.__match(TokenType.FOR):
+            return self.__FOR_STMT()
+        if self.__match(TokenType.IF):
+            return self.__IF_STMT()
+        if self.__match(TokenType.PRINT):
+            return self.__PRINT_STMT()
+        if self.__match(TokenType.RETURN):
+            return self.__RETURN_STMT()
+        if self.__match(TokenType.WHILE):
+            return self.__WHILE_STMT()
+        if self.__match(TokenType.LEFT_BRACE):
+            return Block(self.__BLOCK())
+        return self.__EXPR_STMT()
+
+    def __RETURN_STMT(self) -> Stmt:
+        keyword = self.__previous()
+        value = None
+        if not self.__check(TokenType.SEMICOLON):
+            value = self.__EXPRESSION()
+        self.__consume(TokenType.SEMICOLON, "Expect ';' after return value.")
+        return Return(keyword=keyword, value=value)
+
+    def __FOR_STMT(self) -> Stmt:
         self.__consume(TokenType.LEFT_PAREN, "Expect '(' after 'for'.")
         if self.__match(TokenType.SEMICOLON):
             initializer = None
         elif self.__match(TokenType.VAR):
-            initializer = self.__VAR_DECLARATION()
+            initializer = self.__VAR_DECL()
         else:
-            initializer = self.__EXPRESSION_STATEMENT()
+            initializer = self.__EXPR_STMT()
         condition = None
         if not self.__check(TokenType.SEMICOLON):
             condition = self.__EXPRESSION()
@@ -219,7 +230,14 @@ class Parser:
             body = Block([initializer, body])
         return body
 
-    def __IF_STATEMENT(self) -> Stmt:
+    def __WHILE_STMT(self) -> Stmt:
+        self.__consume(TokenType.LEFT_PAREN, "Expect '(' after 'while'.")
+        condition = self.__EXPRESSION()
+        self.__consume(TokenType.RIGHT_PAREN, "Expect ')' after condition.")
+        body = self.__STATEMENT()
+        return While(condition=condition, body=body)
+
+    def __IF_STMT(self) -> Stmt:
         self.__consume(TokenType.LEFT_PAREN, "Expect '(' after 'if'.")
         condition: Expr = self.__EXPRESSION()
         self.__consume(TokenType.RIGHT_PAREN, "Expect ')' after if condition.")
@@ -229,36 +247,21 @@ class Parser:
             else_branch = self.__STATEMENT()
         return If(condition=condition, then_branch=then_branch, else_branch=else_branch)
 
-    def __PRINT_STATEMENT(self) -> Stmt:
-        value = self.__EXPRESSION()
-        self.__consume(TokenType.SEMICOLON, "Expect ';' after value.")
-        return Print(value)
-
-    def __RETURN_STATEMENT(self) -> Stmt:
-        keyword = self.__previous()
-        value = None
-        if not self.__check(TokenType.SEMICOLON):
-            value = self.__EXPRESSION()
-        self.__consume(TokenType.SEMICOLON, "Expect ';' after return value.")
-        return Return(keyword=keyword, value=value)
-
-    def __WHILE_STATEMENT(self) -> Stmt:
-        self.__consume(TokenType.LEFT_PAREN, "Expect '(' after 'while'.")
-        condition = self.__EXPRESSION()
-        self.__consume(TokenType.RIGHT_PAREN, "Expect ')' after condition.")
-        body = self.__STATEMENT()
-        return While(condition=condition, body=body)
-
-    def __EXPRESSION_STATEMENT(self) -> Stmt:
+    def __EXPR_STMT(self) -> Stmt:
         expr = self.__EXPRESSION()
         self.__consume(TokenType.SEMICOLON, "Expect ';' after value.")
         return Expression(expr)
+
+    def __PRINT_STMT(self) -> Stmt:
+        value = self.__EXPRESSION()
+        self.__consume(TokenType.SEMICOLON, "Expect ';' after value.")
+        return Print(value)
 
     def __EXPRESSION(self) -> Expr:
         return self.__ASSIGNMENT()
 
     def __ASSIGNMENT(self) -> Expr:
-        expr = self.__OR()
+        expr = self.__LOGIC_OR()
         if self.__match(TokenType.EQUAL):
             equals = self.__previous()
             value = self.__ASSIGNMENT()
@@ -270,15 +273,15 @@ class Parser:
             self.__error(equals, "Invalid assignment target.")
         return expr
 
-    def __OR(self) -> Expr:
-        expr = self.__AND()
+    def __LOGIC_OR(self) -> Expr:
+        expr = self.__LOGIC_AND()
         while self.__match(TokenType.OR):
             operator = self.__previous()
-            right = self.__AND()
+            right = self.__LOGIC_AND()
             expr = Logical(left=expr, operator=operator, right=right)
         return expr
 
-    def __AND(self) -> Expr:
+    def __LOGIC_AND(self) -> Expr:
         expr = self.__EQUALITY()
         while self.__match(TokenType.AND):
             operator = self.__previous()
@@ -330,7 +333,22 @@ class Parser:
             return Unary(operator, right)
         return self.__CALL()
 
-    def __FINISH_CALL(self, callee: Expr) -> Expr:
+    def __CALL(self) -> Expr:
+        expr = self.__PRIMARY()
+        while True:
+            if self.__match(TokenType.LEFT_PAREN):
+                expr = self.__ARGUMENTS(expr)
+            elif self.__match(TokenType.DOT):
+                name = self.__consume(
+                    TokenType.IDENTIFIER, "Expect property name after '.'."
+                )
+                assert name is not None
+                expr = Get(expr, name)
+            else:
+                break
+        return expr
+
+    def __ARGUMENTS(self, callee: Expr) -> Expr:
         arguments = []
         if not self.__check(TokenType.RIGHT_PAREN):
             arguments.append(self.__EXPRESSION())
@@ -341,21 +359,6 @@ class Parser:
         paren = self.__consume(TokenType.RIGHT_PAREN, "Expect ')' after arguments.")
         assert paren is not None
         return Call(callee=callee, paren=paren, arguments=arguments)
-
-    def __CALL(self) -> Expr:
-        expr = self.__PRIMARY()
-        while True:
-            if self.__match(TokenType.LEFT_PAREN):
-                expr = self.__FINISH_CALL(expr)
-            elif self.__match(TokenType.DOT):
-                name = self.__consume(
-                    TokenType.IDENTIFIER, "Expect property name after '.'."
-                )
-                assert name is not None
-                expr = Get(expr, name)
-            else:
-                break
-        return expr
 
     def __PRIMARY(self) -> Expr:
         if self.__match(TokenType.FALSE):
