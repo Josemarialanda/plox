@@ -6,7 +6,7 @@ from scanner.tokenType import TokenType
 
 class Scanner:
     def __init__(self, source):
-        self.__hasError: bool = False
+        self.__hadError: bool = False
         self.__source: str = source
         self.__tokens: list[Token] = []
         self.__start: int = 0
@@ -39,13 +39,13 @@ class Scanner:
 
     @property
     def tokens(self) -> list[Token]:
-        if self.__hasError:
+        if self.__hadError:
             return []
         return self.__tokens
 
     @property
-    def hasError(self) -> bool:
-        return self.__hasError
+    def hadError(self) -> bool:
+        return self.__hadError
 
     def __scanTokens(self) -> None:
         while not self.__isEOF():
@@ -195,7 +195,7 @@ class Scanner:
         self.__tokens.append(Token(type, text, literal))
 
     def __error(self, message: str) -> None:
-        self.__hasError = True
+        self.__hadError = True
         print(
             f"""
       line : {self.__line}
