@@ -1,31 +1,45 @@
 import sys
-from scanner.scanner import Scanner
 
-def runFile(path):
-  result = []
-  with open(path) as file:
-    source = file.read()
+from scanner.scanner import Scanner
+from scanner.token import Token
+from parser.parser import Parser
+
+
+def runFile(path: str):
+    with open(path) as file:
+        source = file.read()
+        tokens = runScanner(source)
+        program = runParser(tokens)
+        # run resolver
+        # run interpreter
+
+
+def runScanner(source: str) -> list[Token]:
     scanner = Scanner(source)
     scanner.run()
-    if scanner.hasError:
-      print("Syntax error(s)")
-      for error in scanner.errors:
-        print(error)
-    else:
-      result = scanner.tokens
-      
-  for token in result:
-    print(token)
-        
+    if scanner.hadError:
+        exit(65)
+    return scanner.tokens
+
+
+def runParser(tokens: list[Token]):
+    parser = Parser(tokens)
+    parser.run()
+    if parser.hadError:
+        exit(65)
+    return parser.program
+
+
 def runPrompt():
-  print("Running prompt")
+    print("Running prompt")
+
 
 if __name__ == "__main__":
-  args = sys.argv[1:]
-  if (len(args) > 1):
-    print("Usage: lox [script]")
-    exit(64)
-  elif (len(args) == 1):
-    runFile(args[0])
-  else:
-    runPrompt()
+    args = sys.argv[1:]
+    if len(args) > 1:
+        print("Usage: lox [script]")
+        exit(64)
+    elif len(args) == 1:
+        runFile(args[0])
+    else:
+        runPrompt()
