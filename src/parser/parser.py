@@ -71,7 +71,7 @@ from parser.expr import (
     Unary,
     Variable,
 )
-from parser.parserError import ParseError
+from parser.parseError import ParseError
 from parser.stmt import (
     Block,
     Class,
