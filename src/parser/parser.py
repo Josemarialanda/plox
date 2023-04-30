@@ -394,8 +394,8 @@ class Parser:
                 return True
         return False
 
-    def __consume(self, token_type: TokenType, message: str) -> Optional[Token]:
-        if self.__check(token_type):
+    def __consume(self, tokenType: TokenType, message: str) -> Optional[Token]:
+        if self.__check(tokenType):
             return self.__advance()
         self.__error(self.__peek(), message)
 
