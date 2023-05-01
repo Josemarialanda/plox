@@ -39,7 +39,8 @@ ifStmt         → "if" "(" expression ")" statement ( "else" statement )? ;
 exprStmt       → expression ";" ;
 printStmt      → "print" expression ";" ;
 
-expression     → assignment ;
+expression     → ( assignment | commaExpr ) ;
+commaExpr      → assignment ( "," assignment )+ ;
 assignment     → logic_or ( "=" assignment )? ; 
 logic_or       → logic_and ( "or" logic_and )* ;
 logic_and      → equality ( "and" equality )* ;
@@ -60,6 +61,7 @@ from parser.expr import (
     Binary,
     Call,
     Expr,
+    Comma,
     Get,
     Grouping,
     Literal,
@@ -257,7 +259,12 @@ class Parser:
         return Print(value)
 
     def __EXPRESSION(self) -> Expr:
-        return self.__ASSIGNMENT()
+        assignments: list[Expr] = [self.__ASSIGNMENT()]
+        while self.__match(TokenType.COMMA):
+            assignments.append(self.__ASSIGNMENT())
+        if len(assignments) == 1:
+            return assignments[0]
+        return Comma(assignments)
 
     def __ASSIGNMENT(self) -> Expr:
         expr = self.__LOGIC_OR()

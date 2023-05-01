@@ -25,6 +25,10 @@ class ExprVisitor(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def visit_comma_expr(self, expr: Comma):
+        raise NotImplementedError
+
+    @abstractmethod
     def visit_get_expr(self, expr: Get):
         raise NotImplementedError
 
@@ -97,6 +101,15 @@ class Call(Expr):
     def accept(self, visitor: ExprVisitor):
         """Create a accept method that calls the visitor."""
         return visitor.visit_call_expr(self)
+
+
+class Comma(Expr):
+    def __init__(self, expressions: list[Expr]):
+        self.expressions = expressions
+
+    def accept(self, visitor: ExprVisitor):
+        """Create a accept method that calls the visitor."""
+        return visitor.visit_comma_expr(self)
 
 
 class Get(Expr):

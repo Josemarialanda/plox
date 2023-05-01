@@ -18,6 +18,7 @@ class GenerateAst:
                 "Assign   : Token name, Expr value",
                 "Binary   : Expr left, Token operator, Expr right",
                 "Call     : Expr callee, Token paren, list<Expr> arguments",
+                "Comma    : list<Expr> expressions",
                 "Get      : Expr obj, Token name",
                 "Grouping : Expr expression",
                 "Literal  : Any value",
