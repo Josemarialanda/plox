@@ -39,9 +39,9 @@ ifStmt         → "if" "(" expression ")" statement ( "else" statement )? ;
 exprStmt       → expression ";" ;
 printStmt      → "print" expression ";" ;
 
-expression     → assignment ;
-assignment     → ( call "." )? IDENTIFIER "=" assignment
-               | logic_or;
+expression     → ( assignment | commaExpr ) ;
+commaExpr      → assignment ( "," assignment )+ ;
+assignment     → logic_or ( "=" assignment )? ; 
 logic_or       → logic_and ( "or" logic_and )* ;
 logic_and      → equality ( "and" equality )* ;
 equality       → comparison ( ( "!=" | "==" ) comparison )* ;
