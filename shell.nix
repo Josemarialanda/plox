@@ -3,7 +3,6 @@
 let
   python-packages = p: with p; [
     black
-    isort
     pytest
   ];
   python-with-packages = pkgs.python310.withPackages python-packages;
