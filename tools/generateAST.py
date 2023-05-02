@@ -133,10 +133,6 @@ class GenerateAst:
         # __init__ method
         fields = [field.strip().split() for field in fields_list.split(", ")]
 
-        # Convert SnakeCase to camel_case.
-        # for field in fields:
-        #     field[1] = re.sub(r"(?<!^)(?=[A-Z])", "_", field[1]).lower()
-
         init_fields = ", ".join(f"{field[1]}: {field[0]}" for field in fields)
 
         lines = [
