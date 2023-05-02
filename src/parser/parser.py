@@ -391,7 +391,7 @@ class Parser:
             self.__consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.")
             return Grouping(expr)
         self.__hadError = True
-        raise ParseError(self.__peek(), "Expect expression")
+        raise self.__error(self.__peek(), "Expect expression.")
 
     def __match(self, *args: TokenType) -> bool:
         for tokentype in args:
