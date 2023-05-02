@@ -60,8 +60,8 @@ from parser.expr import (
     Assign,
     Binary,
     Call,
-    Expr,
     Comma,
+    Expr,
     Get,
     Grouping,
     Literal,
@@ -86,7 +86,6 @@ from parser.stmt import (
     While,
 )
 from typing import Optional
-
 from scanner.token import Token
 from scanner.tokenType import TokenType
 

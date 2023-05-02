@@ -1,9 +1,11 @@
 import sys
-
-from scanner.scanner import Scanner
-from scanner.token import Token
 from parser.parser import Parser
 from parser.stmt import Stmt
+from typing import Any
+from resolver.resolver import Resolver
+from runtime.interpreter import Interpreter
+from scanner.scanner import Scanner
+from scanner.token import Token
 
 
 def runFile(path: str):
@@ -11,8 +13,10 @@ def runFile(path: str):
         source = file.read()
         tokens = runScanner(source)
         program = runParser(tokens)
-        # run resolver
-        # run evaluator
+        resolvedProgram = runResolver(program)
+        result = runInterpreter(resolvedProgram)
+        print(result)
+    exit(0)
 
 
 def runScanner(source: str) -> list[Token]:
@@ -29,6 +33,22 @@ def runParser(tokens: list[Token]) -> list[Stmt]:
     if parser.hadError:
         exit(65)
     return parser.program
+
+
+def runResolver(program: list[Stmt]) -> list[Stmt]:
+    resolver = Resolver(program)
+    resolver.run()
+    if resolver.hadError:
+        exit(65)
+    return resolver.resolvedProgram
+
+
+def runInterpreter(program: list[Stmt]) -> Any:
+    interpreter = Interpreter(program)
+    interpreter.run()
+    if interpreter.hadError:
+        exit(65)
+    return interpreter.result
 
 
 def runPrompt():
