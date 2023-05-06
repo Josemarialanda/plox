@@ -1,4 +1,5 @@
 import sys
+import readline
 from parser.parser import Parser
 from parser.stmt import Stmt
 from typing import Any
@@ -9,7 +10,6 @@ from scanner.token import Token
 from scanner.scanError import ScanError
 from parser.parseError import ParseError
 from runtime.ploxRuntimeError import PloxRuntimeError
-
 
 class Plox:
     def __init__(self):
