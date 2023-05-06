@@ -65,19 +65,15 @@ from scanner.tokenType import TokenType
 
 
 class Parser:
-    def __init__(self, __tokens: list[Token]):
+    def __init__(self, __tokens: list[Token], runtime):
         self.__tokens = __tokens
         self.__current = 0
         self.__program: list[stmtType.Stmt] = []
-        self.__hadError = False
+        self.__runtime = runtime
 
     @property
     def program(self) -> list[stmtType.Stmt]:
         return self.__program
-
-    @property
-    def hadError(self) -> bool:
-        return self.__hadError
 
     def run(self):
         self.__PROGRAM()
@@ -97,9 +93,8 @@ class Parser:
                 return self.__VAR_DECL()
             return self.__STATEMENT()
         except ParseError as error:
-            print(error)
+            self.__runtime.reportError(error)
             self.__synchronize()
-            return None
 
     def __CLASS_DECL(self) -> stmtType.Stmt:
         name = self.__consume(TokenType.IDENTIFIER, "Expect class name.")
@@ -133,7 +128,7 @@ class Parser:
             )
             while self.__match(TokenType.COMMA):
                 if len(parameters) >= 255:
-                    self.__error(self.__peek(), "Cannot have more than 255 parameters.")
+                    raise ParseError(self.__peek().line, "Cannot have more than 255 parameters.")
                 parameters.append(
                     self.__consume(TokenType.IDENTIFIER, "Expect parameter name.")
                 )
@@ -249,7 +244,7 @@ class Parser:
                 return exprType.Assign(name, value)
             elif isinstance(expr, exprType.Get):
                 return exprType.Set(expr.obj, expr.name, value)
-            self.__error(equals, "Invalid assignment target.")
+            raise ParseError(equals.line, "Invalid assignment target.")
         return expr
 
     def __LOGIC_OR(self) -> exprType.Expr:
@@ -333,7 +328,7 @@ class Parser:
             arguments.append(self.__EXPRESSION())
             while self.__match(TokenType.COMMA):
                 if len(arguments) >= 255:
-                    self.__error(self.__peek(), "Cannot have more than 255 arguments.")
+                    raise ParseError(self.__peek().line, "Cannot have more than 255 arguments.")
                 arguments.append(self.__EXPRESSION())
         paren = self.__consume(TokenType.RIGHT_PAREN, "Expect ')' after arguments.")
         assert paren is not None
@@ -364,8 +359,7 @@ class Parser:
             expr = self.__EXPRESSION()
             self.__consume(TokenType.RIGHT_PAREN, "Expect ')' after expression.")
             return exprType.Grouping(expr)
-        self.__hadError = True
-        raise self.__error(self.__peek(), "Expect expression.")
+        raise ParseError(self.__peek().line, "Expect expression.")
 
     def __match(self, *args: TokenType) -> bool:
         for tokentype in args:
@@ -377,7 +371,7 @@ class Parser:
     def __consume(self, tokenType: TokenType, message: str) -> Optional[Token]:
         if self.__check(tokenType):
             return self.__advance()
-        self.__error(self.__peek(), message)
+        raise ParseError(self.__peek().line, message)
 
     def __check(self, tokentype: TokenType) -> bool:
         if self.__isAtEnd():
@@ -397,10 +391,6 @@ class Parser:
 
     def __isAtEnd(self) -> bool:
         return self.__peek().tokenType == TokenType.EOF
-
-    def __error(self, token: Token, message: str) -> ParseError:
-        self.__hadError = True
-        raise ParseError(token, message)
 
     def __synchronize(self):
         self.__advance()

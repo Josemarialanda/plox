@@ -2,30 +2,27 @@ from typing import Optional
 
 from scanner.token import Token
 from scanner.tokenType import TokenType
+from scanner.scanError import ScanError
 
 
 class Scanner:
-    def __init__(self, source):
-        self.__hadError: bool = False
-        self.__source: str = source
+    def __init__(self, runtime):
+        self.__runtime = runtime
+        self.__source: str = runtime.source
         self.__tokens: list[Token] = []
         self.__start: int = 0
         self.__current: int = 0
         self.__line: int = 1
-        self.__column: int = 1
 
     def run(self):
-        self.__scanTokens()
+        try:
+            self.__scanTokens()
+        except ScanError as error:
+            self.__runtime.reportError(error)
 
     @property
     def tokens(self) -> list[Token]:
-        if self.__hadError:
-            return []
         return self.__tokens
-
-    @property
-    def hadError(self) -> bool:
-        return self.__hadError
 
     def __scanTokens(self):
         while not self.__isEOF():
@@ -127,7 +124,7 @@ class Scanner:
         )
 
     def __eof(self):
-        self.__tokens.append(Token(TokenType.EOF, "", None))
+        self.__tokens.append(Token(TokenType.EOF, "", None, self.__line))
 
     def __identifier(self):
         __keywords = {
@@ -176,28 +173,17 @@ class Scanner:
 
     def __advance(self) -> str:
         current = self.__peek()
-        match current:
-            case "\n":
-                self.__line += 1
-                self.__column = 1
-            case _:
-                self.__column += 1
+        if current == "\n":
+            self.__line += 1
         self.__current += 1
         return current
 
     def __addToken(self, type: TokenType, literal: Optional[float | str] = None):
         text = self.__source[self.__start : self.__current]
-        self.__tokens.append(Token(type, text, literal))
+        self.__tokens.append(Token(type, text, literal, self.__line))
 
     def __error(self, message: str):
-        self.__hadError = True
-        print(
-            f"""
-      line : {self.__line}
-      column : {self.__column-1}
-      {message}
-      """
-        )
+        raise ScanError(self.__line, message)
 
     def __isEOF(self) -> bool:
         return self.__current >= len(self.__source)
