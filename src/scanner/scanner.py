@@ -89,7 +89,7 @@ class Scanner:
                 elif self.isIdentifierPart(char):
                     self.__identifier()
                 else:
-                    self.__error(f"Unexpected character '{char}'")
+                    raise ScanError(self.__line, f"Unexpected character '{char}'")
         return
 
     def __blockComment(self):
@@ -97,7 +97,7 @@ class Scanner:
             self.__advance()
             if self.__isEOF():
                 self.__advance()
-                self.__error("Unterminated block comment")
+                raise ScanError(self.__line, "Unterminated block comment")
                 break
         self.__advance()
         self.__advance()
@@ -106,7 +106,7 @@ class Scanner:
         while self.__peek() != '"' and not self.__isEOF():
             self.__advance()
         if self.__isEOF():
-            self.__error("Unterminated string")
+            raise ScanError(self.__line, "Unterminated string")
             return
         self.__advance()
         literal = self.__source[self.__start + 1 : self.__current - 1]
@@ -181,9 +181,6 @@ class Scanner:
     def __addToken(self, type: TokenType, literal: Optional[float | str] = None):
         text = self.__source[self.__start : self.__current]
         self.__tokens.append(Token(type, text, literal, self.__line))
-
-    def __error(self, message: str):
-        raise ScanError(self.__line, message)
 
     def __isEOF(self) -> bool:
         return self.__current >= len(self.__source)
