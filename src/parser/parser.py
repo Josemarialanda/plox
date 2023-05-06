@@ -128,7 +128,9 @@ class Parser:
             )
             while self.__match(TokenType.COMMA):
                 if len(parameters) >= 255:
-                    raise ParseError(self.__peek().line, "Cannot have more than 255 parameters.")
+                    raise ParseError(
+                        self.__peek().line, "Cannot have more than 255 parameters."
+                    )
                 parameters.append(
                     self.__consume(TokenType.IDENTIFIER, "Expect parameter name.")
                 )
@@ -328,7 +330,9 @@ class Parser:
             arguments.append(self.__EXPRESSION())
             while self.__match(TokenType.COMMA):
                 if len(arguments) >= 255:
-                    raise ParseError(self.__peek().line, "Cannot have more than 255 arguments.")
+                    raise ParseError(
+                        self.__peek().line, "Cannot have more than 255 arguments."
+                    )
                 arguments.append(self.__EXPRESSION())
         paren = self.__consume(TokenType.RIGHT_PAREN, "Expect ')' after arguments.")
         assert paren is not None

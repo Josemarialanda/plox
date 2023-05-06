@@ -5,7 +5,11 @@ from scanner.tokenType import TokenType
 
 class Token:
     def __init__(
-        self, tokenType: TokenType, lexeme: str, literal: Optional[str | float], line: int
+        self,
+        tokenType: TokenType,
+        lexeme: str,
+        literal: Optional[str | float],
+        line: int,
     ) -> None:
         self.tokenType = tokenType
         self.lexeme = lexeme
