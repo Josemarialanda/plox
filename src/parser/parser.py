@@ -39,8 +39,8 @@ ifStmt         → "if" "(" expression ")" statement ( "else" statement )? ;
 exprStmt       → expression ";" ;
 printStmt      → "print" expression ";" ;
 
-expression     → ( assignment | commaExpr ) ;
-commaExpr      → assignment ( "," assignment )+ ;
+expression     → ( assignment | comma ) ;
+comma          → assignment ( "," assignment )+ ;
 assignment     → logic_or ( "=" assignment )? ; 
 logic_or       → logic_and ( "or" logic_and )* ;
 logic_and      → equality ( "and" equality )* ;
