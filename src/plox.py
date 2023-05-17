@@ -11,6 +11,7 @@ from scanner.scanError import ScanError
 from parser.parseError import ParseError
 from runtime.ploxRuntimeError import PloxRuntimeError
 
+
 class Plox:
     def __init__(self):
         self.__hadError = False
@@ -47,8 +48,7 @@ class Plox:
         result = self.runInterpreter(program)
         if self.__hadRuntimeError:
             return
-        
-        
+
         # resolvedProgram = self.runResolver(program)
         # if self.__hadError:
         #     return

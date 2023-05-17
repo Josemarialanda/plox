@@ -83,7 +83,8 @@ class Interpreter(ExprVisitor, StmtVisitor):
         if type(left) == str or type(right) == str:
             return str(left) + str(right)
         raise PloxRuntimeError(
-            expr.operator, "Operands must be either a string and any type or two numbers."
+            expr.operator,
+            "Operands must be either a string and any type or two numbers.",
         )
 
     def isEqual(self, a: Any, b: Any) -> bool:
@@ -153,7 +154,7 @@ class Interpreter(ExprVisitor, StmtVisitor):
 
     def visit_block_stmt(self, stmt: stmt.Block) -> Any:
         self.executeBlock(stmt.statements, Environment(self.environment))
-        
+
     def executeBlock(self, statements: list[Stmt], environment: Environment):
         previous = self.environment
         try:
