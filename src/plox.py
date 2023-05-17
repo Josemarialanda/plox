@@ -15,6 +15,8 @@ class Plox:
     def __init__(self):
         self.__hadError = False
         self.__hadRuntimeError = False
+        self.__runtime = self
+        self.__interpreter = Interpreter(self.__runtime)
 
     def runFile(self, path: str):
         with open(path) as file:
@@ -36,48 +38,52 @@ class Plox:
             self.__hadError = False
 
     def run(self):
-        tokens = self.runScanner()
+        tokens = self.runScanner(self.source)
         if self.__hadError:
             return
         program = self.runParser(tokens)
         if self.__hadError:
             return
-        resolvedProgram = self.runResolver(program)
-        if self.__hadError:
-            return
-        result = self.runInterpreter(resolvedProgram)
+        result = self.runInterpreter(program)
         if self.__hadRuntimeError:
             return
-        prettyResult = self.__stringify(result)
-        print(prettyResult)
+        
+        
+        # resolvedProgram = self.runResolver(program)
+        # if self.__hadError:
+        #     return
+        # result = self.runInterpreter(resolvedProgram)
+        # if self.__hadRuntimeError:
+        #     return
+        # prettyResult = self.__stringify(result)
+        # print(prettyResult)
 
-    def runScanner(self) -> list[Token]:
-        scanner = Scanner(self)
-        scanner.run()
+    def runScanner(self, source: str) -> list[Token]:
+        scanner = Scanner(self.__runtime)
+        scanner.run(source)
         if self.__hadError:
             return []
         return scanner.tokens
 
     def runParser(self, tokens: list[Token]) -> list[Stmt]:
-        parser = Parser(tokens, self)
-        parser.run()
+        parser = Parser(self.__runtime)
+        parser.run(tokens)
         if self.__hadError:
             return []
         return parser.program
 
     def runResolver(self, program: list[Stmt]) -> list[Stmt]:
-        resolver = Resolver(program, self)
-        resolver.run()
+        resolver = Resolver(self.__runtime)
+        resolver.run(program)
         if self.__hadError:
             return []
         return resolver.resolvedProgram
 
     def runInterpreter(self, program: list[Stmt]) -> Any:
-        interpreter = Interpreter(program, self)
-        interpreter.run()
+        self.__interpreter.run(program)
         if self.__hadRuntimeError | self.__hadError:
             return
-        return interpreter.result
+        return self.__interpreter.result
 
     def reportError(self, error: ScanError | ParseError | PloxRuntimeError):
         if isinstance(error, ScanError):
@@ -90,7 +96,7 @@ class Plox:
             self.__hadError = True
         else:
             print("\nRuntime Error")
-            error.throwRuntimeError(f"\t{error.message} at line {error.token.line}\n")
+            print(f"\t{error.message} at line {error.token.line}\n")
             self.__hadRuntimeError = True
 
     def __stringify(self, obj: Any) -> str:
