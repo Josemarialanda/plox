@@ -37,7 +37,7 @@ class Interpreter(ExprVisitor, StmtVisitor):
         self.environment.assign(expr.name, value)
         return value
 
-    def visit_binary_expr(self, expr: expr.Binary):
+    def visit_binary_expr(self, expr: expr.Binary) -> Any:
         left = self.evaluate(expr.left)
         right = self.evaluate(expr.right)
         tokenType = expr.operator.tokenType
@@ -72,7 +72,7 @@ class Interpreter(ExprVisitor, StmtVisitor):
                 expr.operator, f"Unknown operator {expr.operator.lexeme}"
             )
 
-    def maybeZeroDivision(self, expr: expr.Binary, left: Any, right: Any) -> Any:
+    def maybeZeroDivision(self, expr: expr.Binary, left: Any, right: Any) -> float:
         if right == 0:
             raise PloxRuntimeError(expr.operator, "Cannot divide by zero.")
         return float(left) / float(right)
@@ -102,7 +102,7 @@ class Interpreter(ExprVisitor, StmtVisitor):
     def visit_get_expr(self, expr: expr.Get):
         raise NotImplementedError
 
-    def visit_grouping_expr(self, expr: expr.Grouping):
+    def visit_grouping_expr(self, expr: expr.Grouping) -> Any:
         return self.evaluate(expr.expression)
 
     def visit_literal_expr(self, expr: expr.Literal) -> Any:
@@ -120,7 +120,7 @@ class Interpreter(ExprVisitor, StmtVisitor):
     def visit_this_expr(self, expr: expr.This):
         raise NotImplementedError
 
-    def visit_unary_expr(self, expr: expr.Unary):
+    def visit_unary_expr(self, expr: expr.Unary) -> Any:
         right = self.evaluate(expr.right)
         match expr.operator.tokenType:
             case TokenType.MINUS:
@@ -138,7 +138,7 @@ class Interpreter(ExprVisitor, StmtVisitor):
         if not (isinstance(left, (float, int)) and isinstance(right, (float, int))):
             raise RuntimeError(operator, "Operands must be numbers.")
 
-    def visit_variable_expr(self, expr: expr.Variable):
+    def visit_variable_expr(self, expr: expr.Variable) -> Any:
         return self.environment.get(expr.name)
 
     def evaluate(self, expr: expr.Expr) -> Any:
@@ -151,7 +151,7 @@ class Interpreter(ExprVisitor, StmtVisitor):
             return obj
         return True
 
-    def visit_block_stmt(self, stmt: stmt.Block):
+    def visit_block_stmt(self, stmt: stmt.Block) -> Any:
         self.executeBlock(stmt.statements, Environment(self.environment))
         
     def executeBlock(self, statements: list[Stmt], environment: Environment):
