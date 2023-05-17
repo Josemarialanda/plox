@@ -35,28 +35,26 @@ class Plox:
             if line in ["exit"]:
                 break
             self.source = line
-            self.run()
+            result = self.run()
+            if result is not None:
+                prettyResult = self.__stringify(result)
+                print(prettyResult)
             self.__hadError = False
 
-    def run(self):
+    def run(self) -> Any:
         tokens = self.runScanner(self.source)
         if self.__hadError:
             return
         program = self.runParser(tokens)
         if self.__hadError:
             return
-        result = self.runInterpreter(program)
-        if self.__hadRuntimeError:
-            return
-
         # resolvedProgram = self.runResolver(program)
         # if self.__hadError:
         #     return
-        # result = self.runInterpreter(resolvedProgram)
-        # if self.__hadRuntimeError:
-        #     return
-        # prettyResult = self.__stringify(result)
-        # print(prettyResult)
+        result = self.runInterpreter(program)
+        if self.__hadRuntimeError:
+            return
+        return result
 
     def runScanner(self, source: str) -> list[Token]:
         scanner = Scanner(self.__runtime)

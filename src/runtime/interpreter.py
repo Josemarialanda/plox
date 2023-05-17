@@ -59,7 +59,7 @@ class Interpreter(ExprVisitor, StmtVisitor):
             TokenType.BANG_EQUAL: lambda: not self.isEqual(left, right),
             TokenType.EQUAL_EQUAL: lambda: self.isEqual(left, right),
             TokenType.MINUS: lambda: float(left) - float(right),
-            TokenType.SLASH: self.maybeZeroDivision(expr, left, right),
+            TokenType.SLASH: lambda: self.maybeZeroDivision(expr, left, right),
             TokenType.STAR: lambda: float(left) * float(right),
             TokenType.PLUS: lambda: self.overloadedPlus(expr, left, right),
         }
@@ -98,7 +98,10 @@ class Interpreter(ExprVisitor, StmtVisitor):
         raise NotImplementedError
 
     def visit_comma_expr(self, expr: expr.Comma):
-        raise NotImplementedError
+        values = []
+        for expression in expr.expressions:
+            values.append(self.evaluate(expression))
+        return values[-1]
 
     def visit_get_expr(self, expr: expr.Get):
         raise NotImplementedError
@@ -110,7 +113,15 @@ class Interpreter(ExprVisitor, StmtVisitor):
         return expr.value
 
     def visit_logical_expr(self, expr: expr.Logical):
-        raise NotImplementedError
+        left = self.evaluate(expr.left)
+        op = expr.operator.tokenType
+        match (op, self.isTruthy(left)):
+            case (TokenType.OR, True):
+                return left
+            case (TokenType.AND, False):
+                return left
+            case _:
+                return self.evaluate(expr.right)
 
     def visit_set_expr(self, expr: expr.Set):
         raise NotImplementedError
@@ -167,8 +178,8 @@ class Interpreter(ExprVisitor, StmtVisitor):
     def visit_class_stmt(self, stmt: stmt.Class):
         raise NotImplementedError
 
-    def visit_expression_stmt(self, stmt: stmt.Expression):
-        self.evaluate(stmt.expression)
+    def visit_expression_stmt(self, stmt: stmt.Expression) -> Any:
+        return self.evaluate(stmt.expression)
 
     def visit_function_stmt(self, stmt: stmt.Function):
         raise NotImplementedError
