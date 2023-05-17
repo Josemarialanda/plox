@@ -8,13 +8,13 @@ from scanner.scanError import ScanError
 class Scanner:
     def __init__(self, runtime):
         self.__runtime = runtime
-        self.__source: str = runtime.source
         self.__tokens: list[Token] = []
         self.__start: int = 0
         self.__current: int = 0
         self.__line: int = 1
 
-    def run(self):
+    def run(self, source: str):
+        self.__source = source
         try:
             self.__scanTokens()
         except ScanError as error:

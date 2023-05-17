@@ -65,8 +65,7 @@ from scanner.tokenType import TokenType
 
 
 class Parser:
-    def __init__(self, __tokens: list[Token], runtime):
-        self.__tokens = __tokens
+    def __init__(self, runtime):
         self.__current = 0
         self.__program: list[stmtType.Stmt] = []
         self.__runtime = runtime
@@ -75,7 +74,8 @@ class Parser:
     def program(self) -> list[stmtType.Stmt]:
         return self.__program
 
-    def run(self):
+    def run(self, tokens: list[Token]):
+        self.__tokens = tokens
         self.__PROGRAM()
 
     def __PROGRAM(self):
