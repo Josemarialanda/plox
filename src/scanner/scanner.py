@@ -3,15 +3,16 @@ from typing import Optional
 from scanner.token import Token
 from scanner.tokenType import TokenType
 from scanner.scanError import ScanError
+from plox import Plox
 
 
 class Scanner:
-    def __init__(self, runtime):
+    def __init__(self, runtime: Plox):
         self.__runtime = runtime
-        self.__tokens: list[Token] = []
-        self.__start: int = 0
-        self.__current: int = 0
-        self.__line: int = 1
+        self.__tokens = []
+        self.__start = 0
+        self.__current = 0
+        self.__line = 1
 
     def run(self, source: str):
         self.__source = source

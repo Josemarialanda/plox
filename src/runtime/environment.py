@@ -19,9 +19,6 @@ class Environment:
         return environment
 
     def getAt(self, distance: int, name: str) -> Any:
-        """
-        Return a variable at a distance
-        """
         if ancestor := self.__ancestor(distance):
             return ancestor.values.get(name)
 
