@@ -10,6 +10,7 @@ from scanner.token import Token
 from scanner.scanError import ScanError
 from parser.parseError import ParseError
 from runtime.ploxRuntimeError import PloxRuntimeError
+from utils import stringify
 
 
 class Plox:
@@ -37,7 +38,7 @@ class Plox:
             self.source = line
             result = self.run()
             if result is not None:
-                prettyResult = self.__stringify(result)
+                prettyResult = stringify(result)
                 print(prettyResult)
             self.__hadError = False
 
@@ -96,16 +97,6 @@ class Plox:
             print("\nRuntime Error")
             print(f"\t{error.message} at line {error.token.line}\n")
             self.__hadRuntimeError = True
-
-    def __stringify(self, obj: Any) -> str:
-        if obj is None:
-            return "nil"
-        if isinstance(obj, float):
-            text = str(obj)
-            if text.endswith(".0"):
-                text = text[:-2]
-            return text
-        return str(obj)
 
 
 if __name__ == "__main__":

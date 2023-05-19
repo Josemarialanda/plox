@@ -5,9 +5,13 @@ from parser.stmt import StmtVisitor
 import parser.expr as expr
 import parser.stmt as stmt
 from runtime.ploxRuntimeError import PloxRuntimeError
+from runtime.ploxReturnException import PloxReturnException
 from scanner.token import TokenType
 from scanner.token import Token
 from runtime.environment import Environment
+from utils import stringify
+from runtime.ploxFunction import PloxFunction
+from runtime.native.clock import Clock
 
 
 class Interpreter(ExprVisitor, StmtVisitor):
@@ -17,6 +21,7 @@ class Interpreter(ExprVisitor, StmtVisitor):
         self.globals = Environment()
         self.environment = self.globals
         self.locals = {}
+        self.globals.define("clock", Clock())
 
     @property
     def result(self) -> Any:
@@ -95,7 +100,19 @@ class Interpreter(ExprVisitor, StmtVisitor):
         return a == b
 
     def visit_call_expr(self, expr: expr.Call):
-        raise NotImplementedError
+        callee = self.evaluate(expr.callee)
+        arguments = []
+        for argument in expr.arguments:
+            arguments.append(self.evaluate(argument))
+        if not hasattr(callee, "call"):
+            raise PloxRuntimeError(expr.paren, "Can only call functions and classes.")
+        function = callee
+        if len(arguments) != function.arity():
+            raise PloxRuntimeError(
+                expr.paren,
+                f"Expected {function.arity()} arguments but got {len(arguments)}.",
+            )
+        return function.call(self, arguments)
 
     def visit_comma_expr(self, expr: expr.Comma):
         values = []
@@ -120,8 +137,7 @@ class Interpreter(ExprVisitor, StmtVisitor):
                 return left
             case (TokenType.AND, False):
                 return left
-            case _:
-                return self.evaluate(expr.right)
+        return self.evaluate(expr.right)
 
     def visit_set_expr(self, expr: expr.Set):
         raise NotImplementedError
@@ -182,17 +198,24 @@ class Interpreter(ExprVisitor, StmtVisitor):
         return self.evaluate(stmt.expression)
 
     def visit_function_stmt(self, stmt: stmt.Function):
-        raise NotImplementedError
+        function = PloxFunction(stmt, self.environment, False)
+        self.environment.define(stmt.name.lexeme, function)
 
     def visit_if_stmt(self, stmt: stmt.If):
-        raise NotImplementedError
+        if self.isTruthy(self.evaluate(stmt.condition)):
+            self.__execute(stmt.thenBranch)
+        elif stmt.elseBranch is not None:
+            self.__execute(stmt.elseBranch)
 
     def visit_print_stmt(self, stmt: stmt.Print):
         value = self.evaluate(stmt.expression)
-        print(value)
+        print(stringify(value))
 
     def visit_return_stmt(self, stmt: stmt.Return):
-        raise NotImplementedError
+        value = None
+        if stmt.value is not None:
+            value = self.evaluate(stmt.value)
+        raise PloxReturnException(value)
 
     def visit_var_stmt(self, stmt: stmt.Var):
         value = None
@@ -201,4 +224,5 @@ class Interpreter(ExprVisitor, StmtVisitor):
         self.environment.define(stmt.name.lexeme, value)
 
     def visit_while_stmt(self, stmt: stmt.While):
-        raise NotImplementedError
+        while self.isTruthy(self.evaluate(stmt.condition)):
+            self.__execute(stmt.body)
