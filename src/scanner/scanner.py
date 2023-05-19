@@ -3,11 +3,10 @@ from typing import Optional
 from scanner.token import Token
 from scanner.tokenType import TokenType
 from scanner.scanError import ScanError
-from plox import Plox
 
 
 class Scanner:
-    def __init__(self, runtime: Plox):
+    def __init__(self, runtime):
         self.__runtime = runtime
         self.__tokens = []
         self.__start = 0

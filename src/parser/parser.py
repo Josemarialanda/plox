@@ -62,11 +62,10 @@ from parser.parseError import ParseError
 from typing import Optional
 from scanner.token import Token
 from scanner.tokenType import TokenType
-from plox import Plox
 
 
 class Parser:
-    def __init__(self, runtime: Plox):
+    def __init__(self, runtime):
         self.__current = 0
         self.__program = []
         self.__runtime = runtime
