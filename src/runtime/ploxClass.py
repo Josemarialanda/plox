@@ -5,7 +5,9 @@ from typing import Optional, Any
 
 
 class PloxClass(PloxCallable):
-    def __init__(self, name: str, superclass: 'PloxClass', methods: dict[str, PloxFunction]):
+    def __init__(
+        self, name: str, superclass: "PloxClass", methods: dict[str, PloxFunction]
+    ):
         self.name = name
         self.methods = methods
         self.superclass = superclass
@@ -28,6 +30,6 @@ class PloxClass(PloxCallable):
             return self.methods[name]
         if self.superclass is not None:
             return self.superclass.findMethod(name)
-        
+
     def __str__(self) -> str:
         return self.name
