@@ -10,7 +10,7 @@ from scanner.token import TokenType
 from scanner.token import Token
 from runtime.environment import Environment
 from runtime.ploxFunction import PloxFunction
-from runtime.native.clock import Clock
+from runtime.native.natives import functions as NATIVE_FUNCTIONS
 from runtime.ploxInstance import PloxInstance
 from runtime.ploxCallable import PloxCallable
 
@@ -245,7 +245,8 @@ class Interpreter(ExprVisitor, StmtVisitor):
             self.__execute(stmt.body)
 
     def __defineNativeFunctions(self):
-        self.__globals.define("clock", Clock())
+        for name, function in NATIVE_FUNCTIONS.items():
+            self.__environment.define(name, function)
 
 
 def maybeZeroDivision(expr: expr.Binary, left: Any, right: Any) -> float:

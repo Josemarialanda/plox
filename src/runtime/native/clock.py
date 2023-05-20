@@ -11,3 +11,17 @@ class Clock(PloxCallable):
 
     def __str__(self) -> str:
         return "<native fn>"
+
+
+class CurrentTime(PloxCallable):
+    def call(self, interpreter, arguments) -> str:
+        return time.ctime()
+
+    def arity(self) -> int:
+        return 0
+
+    def __str__(self) -> str:
+        return "<native fn>"
+
+
+functions = {"time": Clock(), "currentTime": CurrentTime()}
