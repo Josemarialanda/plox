@@ -12,6 +12,8 @@ from runtime.environment import Environment
 from utils import stringify
 from runtime.ploxFunction import PloxFunction
 from runtime.native.clock import Clock
+from runtime.ploxInstance import PloxInstance
+from runtime.ploxCallable import PloxCallable
 
 
 class Interpreter(ExprVisitor, StmtVisitor):
@@ -27,6 +29,9 @@ class Interpreter(ExprVisitor, StmtVisitor):
     def result(self) -> Any:
         return self.__result
 
+    def resolve(self, expr: expr.Expr, depth: int):
+        self.locals[expr] = depth
+
     def run(self, program: list[Stmt]):
         try:
             for stmt in program:
@@ -37,9 +42,13 @@ class Interpreter(ExprVisitor, StmtVisitor):
     def __execute(self, stmt: Stmt) -> Any:
         return stmt.accept(self)
 
-    def visit_assign_expr(self, expr: expr.Assign) -> Any:
-        value = self.evaluate(expr.value)
-        self.environment.assign(expr.name, value)
+    def visit_assign_expr(self, expression: expr.Assign):
+        value = self.evaluate(expression.value)
+        distance = self.locals.get(expression)
+        if distance is not None:
+            self.environment.assignAt(distance, expression.name, value)
+        else:
+            self.globals.assign(expression.name, value)
         return value
 
     def visit_binary_expr(self, expr: expr.Binary) -> Any:
@@ -100,13 +109,12 @@ class Interpreter(ExprVisitor, StmtVisitor):
         return a == b
 
     def visit_call_expr(self, expr: expr.Call):
-        callee = self.evaluate(expr.callee)
+        function = self.evaluate(expr.callee)
         arguments = []
         for argument in expr.arguments:
             arguments.append(self.evaluate(argument))
-        if not hasattr(callee, "call"):
+        if not isinstance(function, PloxCallable):
             raise PloxRuntimeError(expr.paren, "Can only call functions and classes.")
-        function = callee
         if len(arguments) != function.arity():
             raise PloxRuntimeError(
                 expr.paren,
@@ -121,7 +129,10 @@ class Interpreter(ExprVisitor, StmtVisitor):
         return values[-1]
 
     def visit_get_expr(self, expr: expr.Get):
-        raise NotImplementedError
+        obj = self.evaluate(expr.obj)
+        if isinstance(obj, PloxInstance):
+            return obj.getAttr(expr.name)
+        raise PloxRuntimeError(expr.name, "Only instances have properties.")
 
     def visit_grouping_expr(self, expr: expr.Grouping) -> Any:
         return self.evaluate(expr.expression)
@@ -140,13 +151,32 @@ class Interpreter(ExprVisitor, StmtVisitor):
         return self.evaluate(expr.right)
 
     def visit_set_expr(self, expr: expr.Set):
-        raise NotImplementedError
+        obj = self.evaluate(expr.obj)
+        if not isinstance(obj, PloxInstance):
+            raise PloxRuntimeError(expr.name, "Only instances have fields.")
+        value = self.evaluate(expr.value)
+        obj.setAttr(expr.name, value)
+        return value
 
     def visit_super_expr(self, expr: expr.Super):
-        raise NotImplementedError
+        distance = self.locals[expr]
+        superclass = self.environment.getAt(distance, "super")
+        obj = self.environment.getAt(distance - 1, "this")
+        method = superclass.findMethod(expr.method.lexeme)
+        if method is None:
+            raise PloxRuntimeError(
+                expr.method, f"Undefined property {expr.method.lexeme}."
+            )
 
     def visit_this_expr(self, expr: expr.This):
-        raise NotImplementedError
+        return self.__lookUpVariable(expr.keyword, expr)
+
+    def __lookUpVariable(self, name: Token, expr: expr.Expr):
+        distance = self.locals.get(expr)
+        if distance is not None:
+            return self.environment.getAt(distance, name.lexeme)
+        else:
+            return self.globals.get(name)
 
     def visit_unary_expr(self, expr: expr.Unary) -> Any:
         right = self.evaluate(expr.right)
@@ -167,7 +197,7 @@ class Interpreter(ExprVisitor, StmtVisitor):
             raise RuntimeError(operator, "Operands must be numbers.")
 
     def visit_variable_expr(self, expr: expr.Variable) -> Any:
-        return self.environment.get(expr.name)
+        return self.__lookUpVariable(expr.name, expr)
 
     def evaluate(self, expr: expr.Expr) -> Any:
         return expr.accept(self)

@@ -11,26 +11,31 @@ from scanner.scanError import ScanError
 from parser.parseError import ParseError
 from runtime.ploxRuntimeError import PloxRuntimeError
 from utils import stringify
+from enum import Enum
+
+
+class RunMode(Enum):
+    FILE = 0
+    PROMPT = 1
 
 
 class Plox:
     def __init__(self):
         self.__hadError = False
-        self.__hadRuntimeError = False
         self.__runtime = self
         self.__interpreter = Interpreter(self.__runtime)
 
     def runFile(self, path: str):
+        self.__runMode = RunMode.FILE
         with open(path) as file:
             self.source = file.read()
         self.run()
         if self.__hadError:
             sys.exit(65)
-        if self.__hadRuntimeError:
-            sys.exit(70)
         exit(0)
 
     def runPrompt(self):
+        self.__runMode = RunMode.PROMPT
         while True:
             line = input("plox > ")
             if line in ["exit"]:
@@ -49,13 +54,8 @@ class Plox:
         program = self.runParser(tokens)
         if self.__hadError:
             return
-        # resolvedProgram = self.runResolver(program)
-        # if self.__hadError:
-        #     return
-        result = self.runInterpreter(program)
-        if self.__hadRuntimeError:
-            return
-        return result
+        self.runResolver(program)
+        return self.runInterpreter(program)
 
     def runScanner(self, source: str) -> list[Token]:
         scanner = Scanner(self.__runtime)
@@ -71,17 +71,12 @@ class Plox:
             return []
         return parser.program
 
-    def runResolver(self, program: list[Stmt]) -> list[Stmt]:
-        resolver = Resolver(self.__runtime)
+    def runResolver(self, program: list[Stmt]):
+        resolver = Resolver(self.__interpreter, self.__runtime)
         resolver.run(program)
-        if self.__hadError:
-            return []
-        return resolver.resolvedProgram
 
     def runInterpreter(self, program: list[Stmt]) -> Any:
         self.__interpreter.run(program)
-        if self.__hadRuntimeError | self.__hadError:
-            return
         return self.__interpreter.result
 
     def reportError(self, error: ScanError | ParseError | PloxRuntimeError):
@@ -96,7 +91,8 @@ class Plox:
         else:
             print("\nRuntime Error")
             print(f"\t{error.message} at line {error.token.line}\n")
-            self.__hadRuntimeError = True
+            if self.__runMode == RunMode.FILE:
+                sys.exit(70)
 
 
 if __name__ == "__main__":

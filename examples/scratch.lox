@@ -1,7 +1,10 @@
-fun thrice() {
-  for (var i = 1; i <= 3; i = i + 1) {
-    print(i);
-  }
+var a = "global";
+{
+  fun showA() {
+    print a;
 }
 
-thrice();
+  showA();
+  var a = "block";
+  showA();
+}

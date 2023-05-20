@@ -19,14 +19,15 @@ class Environment:
         return environment
 
     def getAt(self, distance: int, name: str) -> Any:
-        if ancestor := self.__ancestor(distance):
-            return ancestor.values.get(name)
+        return self.__ancestor(distance).values[name]
 
     def get(self, name: Token) -> Any:
         if name.lexeme in self.values:
             return self.values[name.lexeme]
         if self.enclosing:
             return self.enclosing.get(name)
+        print("undefined get")
+        print(self.values)
         raise PloxRuntimeError(name, f"Undefined variable '{name.lexeme}'.")
 
     def assign(self, name: Token, value: Any):

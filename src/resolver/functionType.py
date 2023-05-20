@@ -1,3 +1,9 @@
-class FunctionType:
-    def __init__(self) -> None:
-        pass
+from enum import Enum, auto
+
+
+class FunctionType(Enum):
+
+    NONE = auto()
+    FUNCTION = auto()
+    METHOD = auto()
+    INITIALIZER = auto()
