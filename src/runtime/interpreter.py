@@ -9,7 +9,6 @@ from runtime.ploxReturnException import PloxReturnException
 from scanner.token import TokenType
 from scanner.token import Token
 from runtime.environment import Environment
-import utils as utils
 from runtime.ploxFunction import PloxFunction
 from runtime.native.clock import Clock
 from runtime.ploxInstance import PloxInstance
@@ -70,10 +69,10 @@ class Interpreter(ExprVisitor, StmtVisitor):
             TokenType.GREATER_EQUAL: lambda: float(left) >= float(right),
             TokenType.LESS: lambda: float(left) < float(right),
             TokenType.LESS_EQUAL: lambda: float(left) <= float(right),
-            TokenType.BANG_EQUAL: lambda: not utils.isEqual(left, right),
-            TokenType.EQUAL_EQUAL: lambda: utils.isEqual(left, right),
+            TokenType.BANG_EQUAL: lambda: not isEqual(left, right),
+            TokenType.EQUAL_EQUAL: lambda: isEqual(left, right),
             TokenType.MINUS: lambda: float(left) - float(right),
-            TokenType.SLASH: lambda: utils.maybeZeroDivision(expr, left, right),
+            TokenType.SLASH: lambda: maybeZeroDivision(expr, left, right),
             TokenType.STAR: lambda: float(left) * float(right),
             TokenType.PLUS: lambda: self.overloadedPlus(expr, left, right),
         }
@@ -198,9 +197,9 @@ class Interpreter(ExprVisitor, StmtVisitor):
         return True
 
     def visit_block_stmt(self, stmt: stmt.Block) -> Any:
-        self.__executeBlock(stmt.statements, Environment(self.__environment))
+        self.executeBlock(stmt.statements, Environment(self.__environment))
 
-    def __executeBlock(self, statements: list[Stmt], environment: Environment):
+    def executeBlock(self, statements: list[Stmt], environment: Environment):
         previous = self.__environment
         try:
             self.__environment = environment
@@ -227,7 +226,7 @@ class Interpreter(ExprVisitor, StmtVisitor):
 
     def visit_print_stmt(self, stmt: stmt.Print):
         value = self.evaluate(stmt.expression)
-        print(utils.stringify(value))
+        print(stringify(value))
 
     def visit_return_stmt(self, stmt: stmt.Return):
         value = None
@@ -247,3 +246,28 @@ class Interpreter(ExprVisitor, StmtVisitor):
 
     def __defineNativeFunctions(self):
         self.__globals.define("clock", Clock())
+
+
+def maybeZeroDivision(expr: expr.Binary, left: Any, right: Any) -> float:
+    if right == 0:
+        raise PloxRuntimeError(expr.operator, "Cannot divide by zero.")
+    return float(left) / float(right)
+
+
+def isEqual(a: Any, b: Any) -> bool:
+    if a is None and b is None:
+        return True
+    if a is None:
+        return False
+    return a == b
+
+
+def stringify(obj: Any) -> str:
+    if obj is None:
+        return "nil"
+    if isinstance(obj, float):
+        text = str(obj)
+        if text.endswith(".0"):
+            text = text[:-2]
+        return text
+    return str(obj)

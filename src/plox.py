@@ -5,12 +5,12 @@ from parser.stmt import Stmt
 from typing import Any
 from resolver.resolver import Resolver
 from runtime.interpreter import Interpreter
+from runtime.interpreter import stringify
 from scanner.scanner import Scanner
 from scanner.token import Token
 from scanner.scanError import ScanError
 from parser.parseError import ParseError
 from runtime.ploxRuntimeError import PloxRuntimeError
-from utils import stringify
 from enum import Enum
 
 
