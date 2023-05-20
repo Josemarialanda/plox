@@ -107,7 +107,6 @@ class Scanner:
             self.__advance()
         if self.__isEOF():
             raise ScanError(self.__line, "Unterminated string")
-            return
         self.__advance()
         literal = self.__source[self.__start + 1 : self.__current - 1]
         self.__addToken(TokenType.STRING, literal)

@@ -9,7 +9,7 @@ from runtime.ploxReturnException import PloxReturnException
 from scanner.token import TokenType
 from scanner.token import Token
 from runtime.environment import Environment
-from utils import stringify
+import utils as utils
 from runtime.ploxFunction import PloxFunction
 from runtime.native.clock import Clock
 from runtime.ploxInstance import PloxInstance
@@ -20,17 +20,17 @@ class Interpreter(ExprVisitor, StmtVisitor):
     def __init__(self, __runtime):
         self.__runtime = __runtime
         self.__result = None
-        self.globals = Environment()
-        self.environment = self.globals
-        self.locals = {}
-        self.globals.define("clock", Clock())
+        self.__globals = Environment()
+        self.__environment = self.__globals
+        self.__locals = {}
+        self.__defineNativeFunctions()
 
     @property
     def result(self) -> Any:
         return self.__result
 
     def resolve(self, expr: expr.Expr, depth: int):
-        self.locals[expr] = depth
+        self.__locals[expr] = depth
 
     def run(self, program: list[Stmt]):
         try:
@@ -44,11 +44,11 @@ class Interpreter(ExprVisitor, StmtVisitor):
 
     def visit_assign_expr(self, expression: expr.Assign):
         value = self.evaluate(expression.value)
-        distance = self.locals.get(expression)
+        distance = self.__locals.get(expression)
         if distance is not None:
-            self.environment.assignAt(distance, expression.name, value)
+            self.__environment.assignAt(distance, expression.name, value)
         else:
-            self.globals.assign(expression.name, value)
+            self.__globals.assign(expression.name, value)
         return value
 
     def visit_binary_expr(self, expr: expr.Binary) -> Any:
@@ -70,10 +70,10 @@ class Interpreter(ExprVisitor, StmtVisitor):
             TokenType.GREATER_EQUAL: lambda: float(left) >= float(right),
             TokenType.LESS: lambda: float(left) < float(right),
             TokenType.LESS_EQUAL: lambda: float(left) <= float(right),
-            TokenType.BANG_EQUAL: lambda: not self.isEqual(left, right),
-            TokenType.EQUAL_EQUAL: lambda: self.isEqual(left, right),
+            TokenType.BANG_EQUAL: lambda: not utils.isEqual(left, right),
+            TokenType.EQUAL_EQUAL: lambda: utils.isEqual(left, right),
             TokenType.MINUS: lambda: float(left) - float(right),
-            TokenType.SLASH: lambda: self.maybeZeroDivision(expr, left, right),
+            TokenType.SLASH: lambda: utils.maybeZeroDivision(expr, left, right),
             TokenType.STAR: lambda: float(left) * float(right),
             TokenType.PLUS: lambda: self.overloadedPlus(expr, left, right),
         }
@@ -86,11 +86,6 @@ class Interpreter(ExprVisitor, StmtVisitor):
                 expr.operator, f"Unknown operator {expr.operator.lexeme}"
             )
 
-    def maybeZeroDivision(self, expr: expr.Binary, left: Any, right: Any) -> float:
-        if right == 0:
-            raise PloxRuntimeError(expr.operator, "Cannot divide by zero.")
-        return float(left) / float(right)
-
     def overloadedPlus(self, expr: expr.Binary, left: Any, right: Any) -> Any:
         if (type(left) == type(right)) and type(left) in [str, float]:
             return left + right
@@ -100,13 +95,6 @@ class Interpreter(ExprVisitor, StmtVisitor):
             expr.operator,
             "Operands must be either a string and any type or two numbers.",
         )
-
-    def isEqual(self, a: Any, b: Any) -> bool:
-        if a is None and b is None:
-            return True
-        if a is None:
-            return False
-        return a == b
 
     def visit_call_expr(self, expr: expr.Call):
         function = self.evaluate(expr.callee)
@@ -159,9 +147,9 @@ class Interpreter(ExprVisitor, StmtVisitor):
         return value
 
     def visit_super_expr(self, expr: expr.Super):
-        distance = self.locals[expr]
-        superclass = self.environment.getAt(distance, "super")
-        obj = self.environment.getAt(distance - 1, "this")
+        distance = self.__locals[expr]
+        superclass = self.__environment.getAt(distance, "super")
+        obj = self.__environment.getAt(distance - 1, "this")
         method = superclass.findMethod(expr.method.lexeme)
         if method is None:
             raise PloxRuntimeError(
@@ -172,11 +160,11 @@ class Interpreter(ExprVisitor, StmtVisitor):
         return self.__lookUpVariable(expr.keyword, expr)
 
     def __lookUpVariable(self, name: Token, expr: expr.Expr):
-        distance = self.locals.get(expr)
+        distance = self.__locals.get(expr)
         if distance is not None:
-            return self.environment.getAt(distance, name.lexeme)
+            return self.__environment.getAt(distance, name.lexeme)
         else:
-            return self.globals.get(name)
+            return self.__globals.get(name)
 
     def visit_unary_expr(self, expr: expr.Unary) -> Any:
         right = self.evaluate(expr.right)
@@ -210,16 +198,16 @@ class Interpreter(ExprVisitor, StmtVisitor):
         return True
 
     def visit_block_stmt(self, stmt: stmt.Block) -> Any:
-        self.executeBlock(stmt.statements, Environment(self.environment))
+        self.__executeBlock(stmt.statements, Environment(self.__environment))
 
-    def executeBlock(self, statements: list[Stmt], environment: Environment):
-        previous = self.environment
+    def __executeBlock(self, statements: list[Stmt], environment: Environment):
+        previous = self.__environment
         try:
-            self.environment = environment
+            self.__environment = environment
             for statement in statements:
                 self.__execute(statement)
         finally:
-            self.environment = previous
+            self.__environment = previous
 
     def visit_class_stmt(self, stmt: stmt.Class):
         raise NotImplementedError
@@ -228,8 +216,8 @@ class Interpreter(ExprVisitor, StmtVisitor):
         return self.evaluate(stmt.expression)
 
     def visit_function_stmt(self, stmt: stmt.Function):
-        function = PloxFunction(stmt, self.environment, False)
-        self.environment.define(stmt.name.lexeme, function)
+        function = PloxFunction(stmt, self.__environment, False)
+        self.__environment.define(stmt.name.lexeme, function)
 
     def visit_if_stmt(self, stmt: stmt.If):
         if self.isTruthy(self.evaluate(stmt.condition)):
@@ -239,7 +227,7 @@ class Interpreter(ExprVisitor, StmtVisitor):
 
     def visit_print_stmt(self, stmt: stmt.Print):
         value = self.evaluate(stmt.expression)
-        print(stringify(value))
+        print(utils.stringify(value))
 
     def visit_return_stmt(self, stmt: stmt.Return):
         value = None
@@ -251,8 +239,11 @@ class Interpreter(ExprVisitor, StmtVisitor):
         value = None
         if stmt.initializer is not None:
             value = self.evaluate(stmt.initializer)
-        self.environment.define(stmt.name.lexeme, value)
+        self.__environment.define(stmt.name.lexeme, value)
 
     def visit_while_stmt(self, stmt: stmt.While):
         while self.isTruthy(self.evaluate(stmt.condition)):
             self.__execute(stmt.body)
+
+    def __defineNativeFunctions(self):
+        self.__globals.define("clock", Clock())

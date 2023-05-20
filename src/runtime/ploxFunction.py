@@ -10,28 +10,28 @@ class PloxFunction(PloxCallable):
     def __init__(
         self, declaration: stmt.Function, closure: Environment, isInitializer: bool
     ):
-        self.declaration = declaration
-        self.closure = closure
-        self.isInitializer = isInitializer
-
-    def arity(self) -> int:
-        return len(self.declaration.params)
-
-    def bind(self, instance: PloxInstance) -> "PloxFunction":
-        environment = Environment(self.closure)
-        environment.define("this", instance)
-        return PloxFunction(self.declaration, environment, self.isInitializer)
-
-    def call(self, interpreter, arguments: list[Any]) -> Any:
-        environment = Environment(self.closure)
-        for i in range(len(self.declaration.params)):
-            environment.define(self.declaration.params[i].lexeme, arguments[i])
-        try:
-            interpreter.executeBlock(self.declaration.body, environment)
-        except PloxReturnException as ploxReturnException:
-            if self.isInitializer:
-                return self.closure.getAt(0, "this")
-            return ploxReturnException.value
+        self.__declaration = declaration
+        self.__closure = closure
+        self.__isInitializer = isInitializer
 
     def __str__(self) -> str:
-        return f"< fn {self.declaration.name.lexeme} >"
+        return f"< fn {self.__declaration.name.lexeme} >"
+
+    def arity(self) -> int:
+        return len(self.__declaration.params)
+
+    def bind(self, instance: PloxInstance) -> "PloxFunction":
+        environment = Environment(self.__closure)
+        environment.define("this", instance)
+        return PloxFunction(self.__declaration, environment, self.__isInitializer)
+
+    def call(self, interpreter, arguments: list[Any]) -> Any:
+        environment = Environment(self.__closure)
+        for i in range(len(self.__declaration.params)):
+            environment.define(self.__declaration.params[i].lexeme, arguments[i])
+        try:
+            interpreter.executeBlock(self.__declaration.body, environment)
+        except PloxReturnException as ploxReturnException:
+            if self.__isInitializer:
+                return self.__closure.getAt(0, "this")
+            return ploxReturnException.value

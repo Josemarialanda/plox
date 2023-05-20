@@ -26,8 +26,6 @@ class Environment:
             return self.values[name.lexeme]
         if self.enclosing:
             return self.enclosing.get(name)
-        print("undefined get")
-        print(self.values)
         raise PloxRuntimeError(name, f"Undefined variable '{name.lexeme}'.")
 
     def assign(self, name: Token, value: Any):

@@ -12,6 +12,9 @@ class PloxClass(PloxCallable):
         self.methods = methods
         self.superclass = superclass
 
+    def __str__(self) -> str:
+        return self.name
+
     def call(self, interpreter, arguments: list[Any]):
         instance = PloxInstance(self)
         initializer = self.findMethod("init")
@@ -30,6 +33,3 @@ class PloxClass(PloxCallable):
             return self.methods[name]
         if self.superclass is not None:
             return self.superclass.findMethod(name)
-
-    def __str__(self) -> str:
-        return self.name

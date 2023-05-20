@@ -13,9 +13,9 @@ class Resolver(ExprVisitor, StmtVisitor):
     def __init__(self, interpreter, runtime):
         self.__interpreter = interpreter
         self.__runtime = runtime
-        self.scopes = []
-        self.currentFunction = FunctionType.NONE
-        self.currentClass = ClassType.NONE
+        self.__scopes = []
+        self.__currentFunction = FunctionType.NONE
+        self.__currentClass = ClassType.NONE
 
     def run(self, program: list[Stmt]):
         self.__resolve(program)
@@ -34,14 +34,14 @@ class Resolver(ExprVisitor, StmtVisitor):
         expression.accept(self)
 
     def __resolveLocal(self, expr: expr.Expr, name: Token):
-        for idx, scope in enumerate(reversed(self.scopes)):
+        for idx, scope in enumerate(reversed(self.__scopes)):
             if name.lexeme in scope:
                 self.__interpreter.resolve(expr, idx)
                 return
 
     def __resolveFunction(self, function: stmt.Function, type: FunctionType):
-        enclosingFunction = self.currentFunction
-        self.currentFunction = type
+        enclosingFunction = self.__currentFunction
+        self.__currentFunction = type
         self.__beginScope()
         for param in function.params:
             self.__declare(param)
@@ -52,25 +52,25 @@ class Resolver(ExprVisitor, StmtVisitor):
         self.current_function = enclosingFunction
 
     def __beginScope(self):
-        self.scopes.append({})
+        self.__scopes.append({})
 
     def __endScope(self):
-        self.scopes.pop()
+        self.__scopes.pop()
 
     def __declare(self, name: Token):
-        if len(self.scopes) == 0:
+        if len(self.__scopes) == 0:
             return
-        scope = self.scopes[-1]
+        scope = self.__scopes[-1]
         if name.lexeme in scope:
-            self.throwError(
+            self.__throwError(
                 name, "Variable with this name already declared in this scope."
             )
         scope[name.lexeme] = False
 
     def __define(self, name: Token):
-        if len(self.scopes) == 0:
+        if len(self.__scopes) == 0:
             return
-        scope = self.scopes[-1]
+        scope = self.__scopes[-1]
         scope[name.lexeme] = True
 
     def visit_assign_expr(self, expr: expr.Assign):
@@ -108,25 +108,25 @@ class Resolver(ExprVisitor, StmtVisitor):
         self.__resolveExpression(expr.obj)
 
     def visit_super_expr(self, expr: expr.Super):
-        if self.currentClass == ClassType.NONE:
-            self.throwError(expr.keyword, "Cannot use 'super' outside of a class.")
-        elif self.currentClass != ClassType.SUBCLASS:
-            self.throwError(
+        if self.__currentClass == ClassType.NONE:
+            self.__throwError(expr.keyword, "Cannot use 'super' outside of a class.")
+        elif self.__currentClass != ClassType.SUBCLASS:
+            self.__throwError(
                 expr.keyword, "Cannot use 'super' in a class with no superclass."
             )
         self.__resolveLocal(expr, expr.keyword)
 
     def visit_this_expr(self, expr: expr.This):
-        if self.currentClass == ClassType.NONE:
-            self.throwError(expr.keyword, "Cannot use 'this' outside of a class.")
+        if self.__currentClass == ClassType.NONE:
+            self.__throwError(expr.keyword, "Cannot use 'this' outside of a class.")
         self.__resolveLocal(expr, expr.keyword)
 
     def visit_unary_expr(self, expr: expr.Unary):
         self.__resolveExpression(expr.right)
 
     def visit_variable_expr(self, expr: expr.Variable):
-        if len(self.scopes) != 0 and self.scopes[-1].get(expr.name.lexeme) == False:
-            self.throwError(
+        if len(self.__scopes) != 0 and self.__scopes[-1].get(expr.name.lexeme) == False:
+            self.__throwError(
                 expr.name, "Cannot read local variable in its own initializer."
             )
         self.__resolveLocal(expr, expr.name)
@@ -142,15 +142,17 @@ class Resolver(ExprVisitor, StmtVisitor):
         self.__declare(stmt.name)
         self.__define(stmt.name)
         if stmt.superclass and stmt.name.lexeme == stmt.superclass.name.lexeme:
-            self.throwError(stmt.superclass.name, "A class cannot inherit from itself.")
+            self.__throwError(
+                stmt.superclass.name, "A class cannot inherit from itself."
+            )
         if stmt.superclass is not None:
             self.current_class = ClassType.SUBCLASS
             self.__resolveExpression(stmt.superclass)
         if stmt.superclass is not None:
             self.__beginScope()
-            self.scopes[-1]["super"] = True
+            self.__scopes[-1]["super"] = True
         self.__beginScope()
-        self.scopes[-1]["this"] = True
+        self.__scopes[-1]["this"] = True
         for method in stmt.methods:
             declaration = FunctionType.METHOD
             if method.name.lexeme == "init":
@@ -179,11 +181,11 @@ class Resolver(ExprVisitor, StmtVisitor):
         self.__resolveExpression(stmt.expression)
 
     def visit_return_stmt(self, stmt: stmt.Return):
-        if self.currentFunction == FunctionType.NONE:
-            self.throwError(stmt.keyword, "Cannot return from top-level code.")
+        if self.__currentFunction == FunctionType.NONE:
+            self.__throwError(stmt.keyword, "Cannot return from top-level code.")
         if stmt.value is not None:
-            if self.currentFunction == FunctionType.INITIALIZER:
-                self.throwError(
+            if self.__currentFunction == FunctionType.INITIALIZER:
+                self.__throwError(
                     stmt.keyword, "Cannot return a value from an initializer."
                 )
             self.__resolveExpression(stmt.value)
@@ -198,6 +200,6 @@ class Resolver(ExprVisitor, StmtVisitor):
         self.__resolveExpression(stmt.condition)
         self.__resolveStatement(stmt.body)
 
-    def throwError(self, token: Token, message: str):
+    def __throwError(self, token: Token, message: str):
         error = PloxRuntimeError(token, message)
         self.__runtime.reportError(error)

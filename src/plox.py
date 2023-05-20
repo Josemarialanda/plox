@@ -48,34 +48,34 @@ class Plox:
             self.__hadError = False
 
     def run(self) -> Any:
-        tokens = self.runScanner(self.source)
+        tokens = self.__runScanner(self.source)
         if self.__hadError:
             return
-        program = self.runParser(tokens)
+        program = self.__runParser(tokens)
         if self.__hadError:
             return
-        self.runResolver(program)
-        return self.runInterpreter(program)
+        self.__runResolver(program)
+        return self.__runInterpreter(program)
 
-    def runScanner(self, source: str) -> list[Token]:
+    def __runScanner(self, source: str) -> list[Token]:
         scanner = Scanner(self.__runtime)
         scanner.run(source)
         if self.__hadError:
             return []
         return scanner.tokens
 
-    def runParser(self, tokens: list[Token]) -> list[Stmt]:
+    def __runParser(self, tokens: list[Token]) -> list[Stmt]:
         parser = Parser(self.__runtime)
         parser.run(tokens)
         if self.__hadError:
             return []
         return parser.program
 
-    def runResolver(self, program: list[Stmt]):
+    def __runResolver(self, program: list[Stmt]):
         resolver = Resolver(self.__interpreter, self.__runtime)
         resolver.run(program)
 
-    def runInterpreter(self, program: list[Stmt]) -> Any:
+    def __runInterpreter(self, program: list[Stmt]) -> Any:
         self.__interpreter.run(program)
         return self.__interpreter.result
 

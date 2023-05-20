@@ -4,20 +4,20 @@ from runtime.ploxRuntimeError import PloxRuntimeError
 
 class PloxInstance:
     def __init__(self, klass):
-        self.klass = klass
-        self.fields = {}
+        self.__klass = klass
+        self.__fields = {}
 
     def __str__(self) -> str:
-        return self.klass.name + " instance"
+        return self.__klass.name + " instance"
 
     def getAttr(self, name: Token) -> object:
-        if name.lexeme in self.fields:
-            return self.fields[name.lexeme]
+        if name.lexeme in self.__fields:
+            return self.__fields[name.lexeme]
 
-        method = self.klass.findMethod(name.lexeme)
+        method = self.__klass.findMethod(name.lexeme)
         if method is not None:
             return method.bind(self)
         raise PloxRuntimeError(name, f"Undefined property {name.lexeme}.")
 
     def setAttr(self, name: Token, value: object) -> None:
-        self.fields[name.lexeme] = value
+        self.__fields[name.lexeme] = value
