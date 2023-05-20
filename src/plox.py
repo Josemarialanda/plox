@@ -1,4 +1,5 @@
 import sys
+import os
 import readline
 from parser.parser import Parser
 from parser.stmt import Stmt
@@ -38,8 +39,22 @@ class Plox:
         self.__runMode = RunMode.PROMPT
         while True:
             line = input("plox > ")
-            if line in ["exit"]:
-                break
+            match line:
+                case "!exit":
+                    print("Bye!")
+                    break
+                case "!clear":
+                    print("\033[H\033[J")
+                    continue
+                case "!help":
+                    print("Type '!exit' to exit the prompt.")
+                    print("Type '!clear' to clear the prompt.")
+                    continue
+                case "!pwd":
+                    print(os.getcwd())
+                    continue
+                case "":
+                    continue            
             self.source = line
             result = self.run()
             if result is not None:
