@@ -12,7 +12,7 @@ class Environment:
         self.values[name] = value
 
     def __ancestor(self, distance: int) -> "Environment":
-        environment: "Environment" = self
+        environment = self
         for _ in range(distance):
             if enclosing := environment.enclosing:
                 environment = enclosing

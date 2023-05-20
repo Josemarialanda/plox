@@ -137,8 +137,8 @@ class Resolver(ExprVisitor, StmtVisitor):
         self.__endScope()
 
     def visit_class_stmt(self, stmt: stmt.Class):
-        enclosing_class = self.current_class
-        self.current_class = ClassType.CLASS
+        enclosingClass = self.__currentClass
+        self.__currentClass = ClassType.CLASS
         self.__declare(stmt.name)
         self.__define(stmt.name)
         if stmt.superclass and stmt.name.lexeme == stmt.superclass.name.lexeme:
@@ -146,7 +146,7 @@ class Resolver(ExprVisitor, StmtVisitor):
                 stmt.superclass.name, "A class cannot inherit from itself."
             )
         if stmt.superclass is not None:
-            self.current_class = ClassType.SUBCLASS
+            self.__currentClass = ClassType.SUBCLASS
             self.__resolveExpression(stmt.superclass)
         if stmt.superclass is not None:
             self.__beginScope()
@@ -161,7 +161,7 @@ class Resolver(ExprVisitor, StmtVisitor):
         self.__endScope()
         if stmt.superclass is not None:
             self.__endScope()
-        self.current_class = enclosing_class
+        self.__currentClass = enclosingClass
 
     def visit_expression_stmt(self, stmt: stmt.Expression):
         self.__resolveExpression(stmt.expression)

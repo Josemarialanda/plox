@@ -13,6 +13,7 @@ from runtime.ploxFunction import PloxFunction
 from runtime.native.natives import functions as NATIVE_FUNCTIONS
 from runtime.ploxInstance import PloxInstance
 from runtime.ploxCallable import PloxCallable
+from runtime.ploxClass import PloxClass
 
 
 class Interpreter(ExprVisitor, StmtVisitor):
@@ -20,7 +21,7 @@ class Interpreter(ExprVisitor, StmtVisitor):
         self.__runtime = __runtime
         self.__result = None
         self.__globals = Environment()
-        self.__environment = self.__globals
+        self.__environment: Environment = self.__globals
         self.__locals = {}
         self.__defineNativeFunctions()
 
@@ -154,6 +155,7 @@ class Interpreter(ExprVisitor, StmtVisitor):
             raise PloxRuntimeError(
                 expr.method, f"Undefined property {expr.method.lexeme}."
             )
+        return method.bind(obj)
 
     def visit_this_expr(self, expr: expr.This):
         return self.__lookUpVariable(expr.keyword, expr)
@@ -209,7 +211,26 @@ class Interpreter(ExprVisitor, StmtVisitor):
             self.__environment = previous
 
     def visit_class_stmt(self, stmt: stmt.Class):
-        raise NotImplementedError
+        superclass = None
+        if stmt.superclass is not None:
+            superclass = self.evaluate(stmt.superclass)
+            if not isinstance(superclass, PloxClass):
+                raise PloxRuntimeError(
+                    stmt.superclass.name, "Superclass must be a class."
+                )
+        self.__environment.define(stmt.name.lexeme, None)
+        if stmt.superclass is not None:
+            self.__environment = Environment(self.__environment)
+            self.__environment.define("super", superclass)
+        methods = {}
+        for method in stmt.methods:
+            function = PloxFunction(method, self.__environment, method.name.lexeme == "init")
+            methods[method.name.lexeme] = function
+        klass = PloxClass(stmt.name.lexeme, superclass, methods)
+        if superclass is not None:
+            if enclosing := self.__environment.enclosing:
+                self.__environment = enclosing
+        self.__environment.assign(stmt.name, klass)
 
     def visit_expression_stmt(self, stmt: stmt.Expression) -> Any:
         return self.evaluate(stmt.expression)
