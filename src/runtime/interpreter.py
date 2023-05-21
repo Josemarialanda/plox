@@ -224,7 +224,9 @@ class Interpreter(ExprVisitor, StmtVisitor):
             self.__environment.define("super", superclass)
         methods = {}
         for method in stmt.methods:
-            function = PloxFunction(method, self.__environment, method.name.lexeme == "init")
+            function = PloxFunction(
+                method, self.__environment, method.name.lexeme == "init"
+            )
             methods[method.name.lexeme] = function
         klass = PloxClass(stmt.name.lexeme, superclass, methods)
         if superclass is not None:

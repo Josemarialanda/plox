@@ -110,7 +110,9 @@ class Resolver(ExprVisitor, StmtVisitor):
 
     def visit_super_expr(self, expr: expr.Super):
         if self.__currentClass == ClassType.NONE:
-            self.__throwResolveError(expr.keyword, "Cannot use 'super' outside of a class.")
+            self.__throwResolveError(
+                expr.keyword, "Cannot use 'super' outside of a class."
+            )
         elif self.__currentClass != ClassType.SUBCLASS:
             self.__throwResolveError(
                 expr.keyword, "Cannot use 'super' in a class with no superclass."
@@ -119,7 +121,9 @@ class Resolver(ExprVisitor, StmtVisitor):
 
     def visit_this_expr(self, expr: expr.This):
         if self.__currentClass == ClassType.NONE:
-            self.__throwResolveError(expr.keyword, "Cannot use 'this' outside of a class.")
+            self.__throwResolveError(
+                expr.keyword, "Cannot use 'this' outside of a class."
+            )
         self.__resolveLocal(expr, expr.keyword)
 
     def visit_unary_expr(self, expr: expr.Unary):

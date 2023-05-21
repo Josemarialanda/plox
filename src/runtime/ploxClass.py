@@ -6,7 +6,10 @@ from typing import Optional, Any
 
 class PloxClass(PloxCallable):
     def __init__(
-        self, name: str, superclass: Optional["PloxClass"], methods: dict[str, PloxFunction]
+        self,
+        name: str,
+        superclass: Optional["PloxClass"],
+        methods: dict[str, PloxFunction],
     ):
         self.name = name
         self.methods = methods

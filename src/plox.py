@@ -55,7 +55,7 @@ class Plox:
                     print(os.getcwd())
                     continue
                 case "":
-                    continue            
+                    continue
             self.source = line
             result = self.run()
             if result is not None:
@@ -95,7 +95,9 @@ class Plox:
         self.__interpreter.run(program)
         return self.__interpreter.result
 
-    def reportError(self, error: ScanError | ParseError | ResolveError | PloxRuntimeError):
+    def reportError(
+        self, error: ScanError | ParseError | ResolveError | PloxRuntimeError
+    ):
         if isinstance(error, ScanError):
             print("\nLexical Error:")
             print(f"\t{error.message} at line {error.line}\n")
