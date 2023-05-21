@@ -11,6 +11,7 @@ from scanner.scanner import Scanner
 from scanner.token import Token
 from scanner.scanError import ScanError
 from parser.parseError import ParseError
+from resolver.resolveError import ResolveError
 from runtime.ploxRuntimeError import PloxRuntimeError
 from enum import Enum
 
@@ -94,12 +95,12 @@ class Plox:
         self.__interpreter.run(program)
         return self.__interpreter.result
 
-    def reportError(self, error: ScanError | ParseError | PloxRuntimeError):
+    def reportError(self, error: ScanError | ParseError | ResolveError | PloxRuntimeError):
         if isinstance(error, ScanError):
             print("\nLexical Error:")
             print(f"\t{error.message} at line {error.line}\n")
             self.__hadError = True
-        elif isinstance(error, ParseError):
+        elif isinstance(error, ParseError) or isinstance(error, ResolveError):
             print("\nSyntax Error")
             print(f"\t{error.message} at line {error.line}\n")
             self.__hadError = True

@@ -7,6 +7,7 @@ import parser.stmt as stmt
 from resolver.functionType import FunctionType
 from resolver.classType import ClassType
 from runtime.ploxRuntimeError import PloxRuntimeError
+from resolver.resolveError import ResolveError
 
 
 class Resolver(ExprVisitor, StmtVisitor):
@@ -62,7 +63,7 @@ class Resolver(ExprVisitor, StmtVisitor):
             return
         scope = self.__scopes[-1]
         if name.lexeme in scope:
-            self.__throwError(
+            self.__throwResolveError(
                 name, "Variable with this name already declared in this scope."
             )
         scope[name.lexeme] = False
@@ -109,16 +110,16 @@ class Resolver(ExprVisitor, StmtVisitor):
 
     def visit_super_expr(self, expr: expr.Super):
         if self.__currentClass == ClassType.NONE:
-            self.__throwError(expr.keyword, "Cannot use 'super' outside of a class.")
+            self.__throwResolveError(expr.keyword, "Cannot use 'super' outside of a class.")
         elif self.__currentClass != ClassType.SUBCLASS:
-            self.__throwError(
+            self.__throwResolveError(
                 expr.keyword, "Cannot use 'super' in a class with no superclass."
             )
         self.__resolveLocal(expr, expr.keyword)
 
     def visit_this_expr(self, expr: expr.This):
         if self.__currentClass == ClassType.NONE:
-            self.__throwError(expr.keyword, "Cannot use 'this' outside of a class.")
+            self.__throwResolveError(expr.keyword, "Cannot use 'this' outside of a class.")
         self.__resolveLocal(expr, expr.keyword)
 
     def visit_unary_expr(self, expr: expr.Unary):
@@ -126,7 +127,7 @@ class Resolver(ExprVisitor, StmtVisitor):
 
     def visit_variable_expr(self, expr: expr.Variable):
         if len(self.__scopes) != 0 and self.__scopes[-1].get(expr.name.lexeme) == False:
-            self.__throwError(
+            self.__throwRuntimeError(
                 expr.name, "Cannot read local variable in its own initializer."
             )
         self.__resolveLocal(expr, expr.name)
@@ -142,7 +143,7 @@ class Resolver(ExprVisitor, StmtVisitor):
         self.__declare(stmt.name)
         self.__define(stmt.name)
         if stmt.superclass and stmt.name.lexeme == stmt.superclass.name.lexeme:
-            self.__throwError(
+            self.__throwResolveError(
                 stmt.superclass.name, "A class cannot inherit from itself."
             )
         if stmt.superclass is not None:
@@ -182,10 +183,10 @@ class Resolver(ExprVisitor, StmtVisitor):
 
     def visit_return_stmt(self, stmt: stmt.Return):
         if self.__currentFunction == FunctionType.NONE:
-            self.__throwError(stmt.keyword, "Cannot return from top-level code.")
+            self.__throwResolveError(stmt.keyword, "Cannot return from top-level code.")
         if stmt.value is not None:
             if self.__currentFunction == FunctionType.INITIALIZER:
-                self.__throwError(
+                self.__throwResolveError(
                     stmt.keyword, "Cannot return a value from an initializer."
                 )
             self.__resolveExpression(stmt.value)
@@ -200,6 +201,10 @@ class Resolver(ExprVisitor, StmtVisitor):
         self.__resolveExpression(stmt.condition)
         self.__resolveStatement(stmt.body)
 
-    def __throwError(self, token: Token, message: str):
+    def __throwRuntimeError(self, token: Token, message: str):
         error = PloxRuntimeError(token, message)
+        self.__runtime.reportError(error)
+
+    def __throwResolveError(self, token: Token, message: str):
+        error = ResolveError(token, message)
         self.__runtime.reportError(error)

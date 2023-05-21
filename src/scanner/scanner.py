@@ -98,7 +98,6 @@ class Scanner:
             if self.__isEOF():
                 self.__advance()
                 raise ScanError(self.__line, "Unterminated block comment")
-                break
         self.__advance()
         self.__advance()
 

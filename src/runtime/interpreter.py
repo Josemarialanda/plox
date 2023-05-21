@@ -179,11 +179,11 @@ class Interpreter(ExprVisitor, StmtVisitor):
     def checkNumberOperand(self, operator: Token, operand: Any):
         if isinstance(operand, (float, int)):
             return
-        raise RuntimeError(operator, "Operand must be a number.")
+        raise PloxRuntimeError(operator, "Operand must be a number.")
 
     def checkNumberOperands(self, operator: Token, left: Any, right: Any):
         if not (isinstance(left, (float, int)) and isinstance(right, (float, int))):
-            raise RuntimeError(operator, "Operands must be numbers.")
+            raise PloxRuntimeError(operator, "Operands must be numbers.")
 
     def visit_variable_expr(self, expr: expr.Variable) -> Any:
         return self.__lookUpVariable(expr.name, expr)
