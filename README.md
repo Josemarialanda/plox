@@ -1,2 +1,3 @@
 # plox
-lox interpreter
+
+A Lox interpreter implemented in Python
