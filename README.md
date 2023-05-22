@@ -13,27 +13,27 @@ Plox is a simple and lightweight programming language interpreter implemented in
 
 1. Clone the repository:
 
-´´´bash
+```bash
 git clone https://github.com/Josemarialanda/plox.git
-´´´
+```
 
 2. Change into the project directory:
 
-´´´bash
+```bash
 cd plox
-´´´
+```
 
 3. Enter the development environment.
 
-´´´bash
+```bash
 nix develop .
-´´´
+```
 
 4. Run the Plox interpreter:
 
-´´´bash
+```bash
 python src/plox.py
-´´´
+```
 
 ## Install Nix
 
