@@ -3,7 +3,6 @@
 let
   python-packages = p: with p; [
     black
-    pytest
   ];
   python-with-packages = pkgs.python310.withPackages python-packages;
   common-utils = with pkgs; [ curl wget gcc ];
